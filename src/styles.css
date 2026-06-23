@@ -1164,7 +1164,7 @@ button.sri-link {
   max-width: 1440px;
   margin: 0 auto 16px;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
+  border-radius: 999px;
   padding: 12px 16px;
   display: flex;
   justify-content: space-between;
@@ -1172,6 +1172,14 @@ button.sri-link {
   align-items: center;
   background: rgba(255, 255, 255, 0.09);
   backdrop-filter: blur(12px);
+  position: sticky;
+  top: 14px;
+  z-index: 20;
+}
+
+.public-brand-link {
+  color: inherit;
+  text-decoration: none;
 }
 
 .public-store-nav nav,
@@ -1208,9 +1216,9 @@ button.sri-link {
 }
 
 .store-hero {
-  min-height: 680px;
+  min-height: min(760px, calc(100vh - 128px));
   border-radius: 8px;
-  padding: clamp(24px, 4vw, 54px);
+  padding: clamp(28px, 5vw, 72px);
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
   gap: 36px;
@@ -1270,10 +1278,10 @@ button.sri-link {
 }
 
 .store-hero h2 {
-  max-width: 760px;
+  max-width: 800px;
   margin: 0;
-  font-size: clamp(42px, 6.8vw, 88px);
-  line-height: 0.98;
+  font-size: clamp(48px, 7.6vw, 104px);
+  line-height: 0.92;
   letter-spacing: 0;
 }
 
@@ -1290,6 +1298,28 @@ button.sri-link {
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 6px;
+}
+
+.hero-proof {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.hero-proof span {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 9px 12px;
+  color: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.hero-proof strong {
+  color: white;
 }
 
 .store-showcase {
@@ -1405,6 +1435,26 @@ button.sri-link {
   bottom: 12%;
   left: 15%;
   animation-delay: 0.7s;
+}
+
+.brand-strip {
+  border: 1px solid var(--blue-line);
+  border-radius: 999px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  background: white;
+  box-shadow: var(--shadow);
+}
+
+.brand-strip span {
+  border-radius: 999px;
+  padding: 9px 13px;
+  color: var(--navy);
+  background: var(--blue-soft);
+  font-weight: 900;
 }
 
 .store-section {
@@ -1543,6 +1593,66 @@ button.sri-link {
 .service-card > strong {
   margin-top: auto;
   color: var(--navy);
+  font-size: 18px;
+}
+
+.ecosystem-section {
+  border-radius: 8px;
+  padding: clamp(24px, 4vw, 48px);
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 24px;
+  align-items: center;
+  background:
+    radial-gradient(circle at top right, rgba(0, 118, 255, 0.12), transparent 20rem),
+    white;
+  box-shadow: var(--shadow);
+}
+
+.ecosystem-copy h2 {
+  max-width: 680px;
+  margin: 0;
+  color: var(--navy);
+  font-size: clamp(32px, 4vw, 58px);
+  line-height: 1.02;
+}
+
+.ecosystem-copy p:not(.eyebrow) {
+  max-width: 620px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.ecosystem-flow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.ecosystem-flow div {
+  min-height: 150px;
+  border: 1px solid var(--blue-line);
+  border-radius: 8px;
+  padding: 18px;
+  display: grid;
+  align-content: space-between;
+  background: linear-gradient(180deg, white, var(--blue-soft));
+  transition: transform 0.2s var(--spring), box-shadow 0.2s ease;
+}
+
+.ecosystem-flow div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 42px rgba(0, 80, 195, 0.14);
+}
+
+.ecosystem-flow strong {
+  color: var(--brand);
+  font-size: 34px;
+}
+
+.ecosystem-flow span {
+  color: var(--navy);
+  font-weight: 900;
   font-size: 18px;
 }
 
@@ -2231,7 +2341,8 @@ button.sri-link {
   .content-grid,
   .store-hero,
   .store-split,
-  .story-section {
+  .story-section,
+  .ecosystem-section {
     grid-template-columns: 1fr;
   }
 
@@ -2368,6 +2479,7 @@ button.sri-link {
   .public-store-nav {
     align-items: stretch;
     flex-direction: column;
+    border-radius: 8px;
   }
 
   .public-store-nav nav {
@@ -2399,14 +2511,24 @@ button.sri-link {
   }
 
   .store-hero h2 {
-    font-size: 36px;
+    font-size: 42px;
   }
 
   .store-section,
   .store-blue-card,
   .store-product-list,
-  .story-section {
+  .story-section,
+  .ecosystem-section {
     padding: 18px;
+  }
+
+  .brand-strip {
+    border-radius: 8px;
+    justify-content: flex-start;
+  }
+
+  .ecosystem-flow {
+    grid-template-columns: 1fr;
   }
 
   .floating-ticket {

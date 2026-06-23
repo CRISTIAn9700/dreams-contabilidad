@@ -847,9 +847,12 @@ function PublicStorefront({ onEnter }) {
   return (
     <main className="public-store-page">
       <header className="public-store-nav">
-        <BrandLogo variant="inverse" size="sidebar" />
+        <a className="public-brand-link" href="#inicio" aria-label="Ir al inicio">
+          <BrandLogo variant="inverse" size="sidebar" />
+        </a>
         <nav aria-label="Navegación de tienda Dreams">
           <a href="#productos">Productos</a>
+          <a href="#ecosistema">Ecosistema</a>
           <a href="#historia">Historia</a>
           <a href="#galeria">Galería</a>
         </nav>
@@ -1195,7 +1198,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
   };
   return (
     <main className="storefront">
-      <section className="store-hero">
+      <section className="store-hero" id="inicio">
         <video
           className="store-hero-video"
           src={HERO_VIDEO_URL}
@@ -1208,10 +1211,10 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
         />
         <div className="store-hero-copy">
           <BrandLogo variant="inverse" size="store" />
-          <p className="eyebrow">Tienda publicitaria + producción real</p>
-          <h2>Publicidad física, láser CO2 y productos de marca que sí se ven.</h2>
+          <p className="eyebrow">Tienda publicitaria + taller de producción</p>
+          <h2>Todo para que tu marca se vea, venda y crezca.</h2>
           <p>
-            Dreams convierte ideas en piezas listas para vender: corte, grabado, letreros, textiles, material impreso, campañas digitales y asesoría web.
+            Corte láser CO2, grabado, letreros, textiles, material impreso, marketing digital y asesoría web desde Tulcán para negocios que necesitan presencia real.
           </p>
           <div className="store-actions">
             {publicMode ? (
@@ -1224,6 +1227,11 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             <button className="ghost-button white" onClick={() => goTo('productos')}>
               {publicMode ? 'Acceso contable' : 'Editar productos'}
             </button>
+          </div>
+          <div className="hero-proof">
+            <span><strong>2012</strong> trayectoria</span>
+            <span><strong>360°</strong> físico + digital</span>
+            <span><strong>Tulcán</strong> norte del Ecuador</span>
           </div>
         </div>
         <div className="store-showcase" aria-label="Vista conceptual de producción Dreams">
@@ -1245,6 +1253,12 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
           <div className="floating-ticket two">Letreros 3D</div>
           <div className="floating-ticket three">Sublimación</div>
         </div>
+      </section>
+
+      <section className="brand-strip" aria-label="Líneas principales de Dreams">
+        {['Corte láser CO2', 'Letreros 3D', 'DTF', 'Sublimación', 'Plotter', 'Marketing digital'].map((item) => (
+          <span key={item}>{item}</span>
+        ))}
       </section>
 
       <section className="store-section" id="productos">
@@ -1274,6 +1288,24 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
               </div>
               <strong>{service.price}</strong>
             </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="ecosystem-section" id="ecosistema">
+        <div className="ecosystem-copy">
+          <p className="eyebrow">Ecosistema Dreams</p>
+          <h2>Una sola experiencia para vender, producir y registrar.</h2>
+          <p>La portada funciona como vitrina comercial. El sistema interno registra clientes, ventas, facturas PDF, históricos, IVA y reportes para que cada pedido tenga seguimiento.</p>
+        </div>
+        <div className="ecosystem-flow">
+          {[
+            ['01', 'Cliente ve la tienda'],
+            ['02', 'Cotizas por WhatsApp'],
+            ['03', 'Produces en taller'],
+            ['04', 'Registras venta y factura'],
+          ].map(([number, label]) => (
+            <div key={number}><strong>{number}</strong><span>{label}</span></div>
           ))}
         </div>
       </section>
