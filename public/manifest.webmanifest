@@ -1,0 +1,25 @@
+{
+  "name": "Dreams Contabilidad",
+  "short_name": "Dreams",
+  "description": "Sistema contable web para Dreams, Ecuador.",
+  "start_url": "/dreams-contabilidad/",
+  "scope": "/dreams-contabilidad/",
+  "display": "standalone",
+  "background_color": "#071933",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/dreams-contabilidad/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/dreams-contabilidad/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

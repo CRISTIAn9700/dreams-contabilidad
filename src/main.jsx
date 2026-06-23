@@ -28,6 +28,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Smartphone,
   Trash2,
   UsersRound,
   Zap,
@@ -60,6 +61,11 @@ const SRI_FACTURADOR_URL = import.meta.env.VITE_SRI_FACTURADOR_URL || 'https://f
 const SRI_FACTURACION_INFO_URL = 'https://www.sri.gob.ec/facturacion-electronica';
 const cloudConfigured = cloudReady;
 const allowPublicSignup = !cloudConfigured || import.meta.env.VITE_ALLOW_PUBLIC_SIGNUP === 'true';
+const APP_BASE = import.meta.env.BASE_URL || './';
+
+function assetPath(path) {
+  return `${APP_BASE}${path.replace(/^\//, '')}`;
+}
 
 const seedData = {
   users: [
@@ -254,6 +260,47 @@ function useLocalClock() {
   };
 }
 
+function useInstallApp() {
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [installed, setInstalled] = useState(() => window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone);
+
+  useEffect(() => {
+    function beforeInstallPrompt(event) {
+      event.preventDefault();
+      setDeferredPrompt(event);
+    }
+    function appInstalled() {
+      setInstalled(true);
+      setDeferredPrompt(null);
+      setShowHelp(false);
+    }
+    window.addEventListener('beforeinstallprompt', beforeInstallPrompt);
+    window.addEventListener('appinstalled', appInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', beforeInstallPrompt);
+      window.removeEventListener('appinstalled', appInstalled);
+    };
+  }, []);
+
+  async function install() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      await deferredPrompt.userChoice;
+      setDeferredPrompt(null);
+      return;
+    }
+    setShowHelp((current) => !current);
+  }
+
+  return {
+    canInstall: Boolean(deferredPrompt),
+    installed,
+    install,
+    showHelp,
+  };
+}
+
 function loadState() {
   const saved = localStorage.getItem('dreams-contabilidad-state');
   return saved ? JSON.parse(saved) : seedData;
@@ -365,6 +412,13 @@ function App() {
   const [syncStatus, setSyncStatus] = useState(cloudConfigured ? 'Conectando nube' : 'Modo local');
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const localClock = useLocalClock();
+  const installApp = useInstallApp();
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(assetPath('sw.js')).catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     if (!cloudConfigured) return undefined;
@@ -524,7 +578,7 @@ function App() {
   }
 
   return (
-    <Shell session={session} view={view} setView={setView} logout={logout} syncStatus={syncStatus} localClock={localClock}>
+    <Shell session={session} view={view} setView={setView} logout={logout} syncStatus={syncStatus} localClock={localClock} installApp={installApp}>
       {view === 'panel' && <Dashboard state={state} setView={setView} localClock={localClock} />}
       {view === 'ventas' && <Sales state={state} updateState={updateState} />}
       {view === 'gastos' && <Expenses state={state} updateState={updateState} />}
@@ -581,7 +635,7 @@ function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
 
   return (
     <main className="login-page">
-      <section className="login-hero">
+      <section className="login-hero" style={{ '--hero-image': `url("${assetPath('images/laser-co2-hero.png')}")` }}>
         <BrandLogo variant="inverse" size="hero" />
         <p className="eyebrow">Sistema contable para Ecuador</p>
         <h1>Dreams Contabilidad</h1>
@@ -680,7 +734,7 @@ function PasswordResetScreen({ onSave }) {
 
   return (
     <main className="login-page password-page">
-      <section className="login-hero">
+      <section className="login-hero" style={{ '--hero-image': `url("${assetPath('images/laser-co2-hero.png')}")` }}>
         <BrandLogo variant="inverse" size="hero" />
         <p className="eyebrow">Seguridad Dreams</p>
         <h1>Nueva contraseña</h1>
@@ -709,7 +763,7 @@ function PasswordResetScreen({ onSave }) {
   );
 }
 
-function Shell({ children, session, view, setView, logout, syncStatus, localClock }) {
+function Shell({ children, session, view, setView, logout, syncStatus, localClock, installApp }) {
   const nav = [
     ['panel', 'Panel', LayoutDashboard],
     ['ventas', 'Ventas', ReceiptText],
@@ -747,6 +801,19 @@ function Shell({ children, session, view, setView, logout, syncStatus, localCloc
             {cloudConfigured ? <Cloud size={18} /> : <Database size={18} />}
             <span>{syncStatus}</span>
           </div>
+          {!installApp.installed && (
+            <div className="install-wrap">
+              <button className="install-chip" onClick={installApp.install}>
+                <Smartphone size={18} />
+                <span>{installApp.canInstall ? 'Instalar app' : 'Acceso rápido'}</span>
+              </button>
+              {installApp.showHelp && (
+                <div className="install-help">
+                  En celular: abre el menú del navegador y elige “Agregar a pantalla de inicio”.
+                </div>
+              )}
+            </div>
+          )}
           <div className="local-clock">
             <MapPin size={18} />
             <div>
@@ -912,7 +979,7 @@ function Metric({ title, value, hint, tone = '' }) {
 
 function BrandLogo({ variant = 'primary', size = 'default' }) {
   const [fallback, setFallback] = useState(false);
-  const src = variant === 'inverse' ? '/brand/dreams-logo-inverse.png' : '/brand/dreams-logo-primary.png';
+  const src = assetPath(variant === 'inverse' ? 'brand/dreams-logo-inverse.png' : 'brand/dreams-logo-primary.png');
   return (
     <div className={`brand-logo ${size} ${variant}`}>
       {fallback ? (
