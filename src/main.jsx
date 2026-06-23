@@ -569,7 +569,9 @@ function Shell({ children, session, view, setView, logout, syncStatus, localCloc
             <span>{session.name}</span>
           </div>
         </header>
-        {children}
+        <div className="view-stage" key={view}>
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -607,7 +609,7 @@ function Dashboard({ state, setView, localClock }) {
     <main className="content-grid">
       <section className="hero-panel">
         <div>
-          <p className="eyebrow">Junio 2026</p>
+          <p className="eyebrow">{localClock.monthLabel}</p>
           <h2>Visión general de Dreams Contabilidad</h2>
           <p>Ventas, gastos, IVA y flujo de caja para operar tu agencia de publicidad con láser CO2 desde {LOCAL_LOCATION}.</p>
         </div>

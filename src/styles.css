@@ -13,6 +13,7 @@
   --warn: #b54708;
   --danger: #b42318;
   --shadow: 0 20px 50px rgba(7, 25, 51, 0.1);
+  --spring: cubic-bezier(0.2, 0.8, 0.2, 1);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -39,6 +40,16 @@ button {
   cursor: pointer;
 }
 
+button,
+a,
+.product-card,
+.list-row,
+.calendar-day,
+.metric,
+.panel {
+  -webkit-tap-highlight-color: transparent;
+}
+
 .login-page {
   min-height: 100vh;
   display: grid;
@@ -58,7 +69,7 @@ button {
   justify-content: flex-end;
   background:
     linear-gradient(120deg, rgba(7, 25, 51, 0.9), rgba(11, 45, 92, 0.76)),
-    url("https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&w=1800&q=80") center/cover;
+    url("/images/laser-co2-hero.png") center/cover;
   position: relative;
   overflow: hidden;
 }
@@ -73,6 +84,17 @@ button {
   background: rgba(249, 115, 22, 0.28);
   filter: blur(4px);
   animation: floatGlow 7s ease-in-out infinite;
+}
+
+.login-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(249, 115, 22, 0.16), transparent 42%),
+    radial-gradient(circle at 30% 58%, rgba(255, 255, 255, 0.18), transparent 12rem);
+  mix-blend-mode: screen;
+  animation: laserSweep 6s var(--spring) infinite;
 }
 
 .login-hero > * {
@@ -107,7 +129,7 @@ button {
   padding: 32px;
   display: grid;
   gap: 18px;
-  animation: riseIn 0.5s ease both;
+  animation: riseIn 0.5s var(--spring) both;
 }
 
 .brand-logo {
@@ -232,6 +254,34 @@ button {
   align-items: center;
   color: #d8deea;
   background: transparent;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s var(--spring), background 0.18s ease, color 0.18s ease;
+}
+
+.sidebar button::after,
+.primary-button::after,
+.quick-actions button::after,
+.ghost-button::after,
+.danger-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(255, 255, 255, 0.38), transparent 32%);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.2s ease, transform 0.28s var(--spring);
+  pointer-events: none;
+}
+
+.sidebar button:hover::after,
+.primary-button:hover::after,
+.quick-actions button:hover::after,
+.ghost-button:hover::after,
+.danger-button:hover::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .sidebar button.active,
@@ -248,6 +298,10 @@ button {
 .workspace {
   min-width: 0;
   padding: 24px;
+}
+
+.view-stage {
+  animation: pageSlide 0.36s var(--spring) both;
 }
 
 .topbar {
@@ -363,6 +417,7 @@ button {
   box-shadow: var(--shadow);
   overflow: hidden;
   position: relative;
+  animation: heroEnter 0.55s var(--spring) both;
 }
 
 .hero-panel::after {
@@ -413,11 +468,18 @@ button {
   text-decoration: none;
   font-weight: 800;
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, filter 0.18s ease;
 }
 
 .quick-actions button:first-child {
   color: var(--navy);
   background: white;
+}
+
+.quick-actions button:hover {
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.16);
 }
 
 .metrics-grid {
@@ -435,8 +497,8 @@ button {
   display: grid;
   gap: 8px;
   background: white;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
-  animation: riseIn 0.42s ease both;
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, border-color 0.18s ease;
+  animation: riseIn 0.42s var(--spring) both;
 }
 
 .metric:hover,
@@ -444,6 +506,22 @@ button {
 .product-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 24px 55px rgba(7, 25, 51, 0.13);
+}
+
+.metrics-grid .metric:nth-child(1) {
+  animation-delay: 0.03s;
+}
+
+.metrics-grid .metric:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.metrics-grid .metric:nth-child(3) {
+  animation-delay: 0.13s;
+}
+
+.metrics-grid .metric:nth-child(4) {
+  animation-delay: 0.18s;
 }
 
 .metric span,
@@ -472,7 +550,8 @@ button {
 .panel {
   padding: 20px;
   min-width: 0;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, border-color 0.18s ease;
+  animation: panelIn 0.45s var(--spring) both;
 }
 
 .panel.wide {
@@ -514,7 +593,7 @@ button {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, var(--brand), var(--accent));
-  animation: growBar 0.7s ease both;
+  animation: growBar 0.8s var(--spring) both;
 }
 
 .list-row {
@@ -586,15 +665,25 @@ textarea {
 .primary-button {
   background: linear-gradient(135deg, var(--brand), var(--brand-2));
   text-decoration: none;
-  transition: transform 0.18s ease, filter 0.18s ease;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s var(--spring), filter 0.18s ease, box-shadow 0.18s ease;
 }
 
 .primary-button:hover,
 .danger-button:hover,
 .quick-actions button:hover,
 .ghost-button:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   filter: brightness(1.03);
+}
+
+.primary-button:active,
+.danger-button:active,
+.quick-actions button:active,
+.ghost-button:active,
+.sidebar button:active {
+  transform: translateY(0) scale(0.99);
 }
 
 .ghost-button {
@@ -719,6 +808,7 @@ button.sri-link {
   padding: 16px;
   display: grid;
   gap: 14px;
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .product-meta {
@@ -811,11 +901,19 @@ button.sri-link {
   flex-direction: column;
   justify-content: space-between;
   background: #fbfcff;
+  transition: transform 0.16s var(--spring), background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .calendar-day.today {
   border-color: var(--brand);
   background: #fff7ed;
+  box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.26);
+}
+
+.calendar-day:hover {
+  transform: translateY(-2px);
+  border-color: #fdba74;
+  box-shadow: 0 12px 26px rgba(7, 25, 51, 0.08);
 }
 
 .calendar-day span {
@@ -837,10 +935,12 @@ button.sri-link {
 
 .calendar-day i.sale {
   background: var(--brand);
+  animation: dotPulse 1.8s ease infinite;
 }
 
 .calendar-day i.expense {
   background: var(--accent);
+  animation: dotPulse 1.8s ease infinite 0.35s;
 }
 
 .check {
@@ -979,6 +1079,39 @@ button.sri-link {
   }
 }
 
+@keyframes pageSlide {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes growBar {
   from {
     width: 8%;
@@ -1004,5 +1137,40 @@ button.sri-link {
   }
   50% {
     transform: translate3d(-18px, -12px, 0);
+  }
+}
+
+@keyframes laserSweep {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateX(-4%);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateX(4%);
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }
