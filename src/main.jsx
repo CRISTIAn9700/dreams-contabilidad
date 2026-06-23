@@ -11,8 +11,10 @@ import {
   Cloud,
   Database,
   Download,
+  Eye,
   ExternalLink,
   EyeOff,
+  FileText,
   FileSpreadsheet,
   FilePlus2,
   History,
@@ -30,7 +32,9 @@ import {
   Sparkles,
   Smartphone,
   Trash2,
+  UploadCloud,
   UsersRound,
+  X,
   Zap,
 } from 'lucide-react';
 import './styles.css';
@@ -59,6 +63,7 @@ const today = localDateKey(new Date());
 const currentMonth = today.slice(0, 7);
 const SRI_FACTURADOR_URL = import.meta.env.VITE_SRI_FACTURADOR_URL || 'https://facturadorsri.sri.gob.ec/portal-facturadorsri-internet/pages/inicio.html';
 const SRI_FACTURACION_INFO_URL = 'https://www.sri.gob.ec/facturacion-electronica';
+const INVOICE_MAX_BYTES = 1.2 * 1024 * 1024;
 const cloudConfigured = cloudReady;
 const allowPublicSignup = !cloudConfigured || import.meta.env.VITE_ALLOW_PUBLIC_SIGNUP === 'true';
 const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '')
@@ -413,6 +418,40 @@ function downloadExcelHtml(filename, sheets) {
   URL.revokeObjectURL(url);
 }
 
+function formatBytes(bytes = 0) {
+  if (!bytes) return '0 KB';
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function readInvoiceFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) {
+      resolve(null);
+      return;
+    }
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      reject(new Error('Solo se aceptan facturas en PDF.'));
+      return;
+    }
+    if (file.size > INVOICE_MAX_BYTES) {
+      reject(new Error(`El PDF pesa ${formatBytes(file.size)}. Sube una factura optimizada menor a ${formatBytes(INVOICE_MAX_BYTES)}.`));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => resolve({
+      name: file.name,
+      size: file.size,
+      type: 'application/pdf',
+      dataUrl: reader.result,
+      uploadedAt: new Date().toISOString(),
+    });
+    reader.onerror = () => reject(new Error('No se pudo leer el PDF. Intenta con otro archivo.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 function App() {
   const [state, setState] = useState(loadState);
   const [session, setSession] = useState(() => JSON.parse(localStorage.getItem('dreams-contabilidad-session') || 'null'));
@@ -606,7 +645,7 @@ function App() {
       {view === 'gastos' && <Expenses state={state} updateState={updateState} />}
       {view === 'productos' && <Products state={state} updateState={updateState} />}
       {view === 'clientes' && <Clients state={state} updateState={updateState} />}
-      {view === 'historico' && <HistoryView state={state} />}
+      {view === 'historico' && <HistoryView state={state} updateState={updateState} />}
       {view === 'reportes' && <Reports state={state} />}
       {view === 'ajustes' && <SettingsView state={state} updateState={updateState} />}
     </Shell>
@@ -1062,6 +1101,9 @@ function Sales({ state, updateState }) {
   });
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState('');
+  const [draftInvoice, setDraftInvoice] = useState(null);
+  const [invoicePreview, setInvoicePreview] = useState(null);
+  const [invoiceError, setInvoiceError] = useState('');
   const selectedProduct = state.products.find((item) => item.id === draft.productId);
   const previewSubtotal = Number(selectedProduct?.price || 0) * Number(draft.quantity || 0);
   const previewIva = selectedProduct?.iva ? previewSubtotal * state.business.ivaRate : 0;
@@ -1069,7 +1111,7 @@ function Sales({ state, updateState }) {
   const rows = state.sales.filter((sale) => {
     const client = state.clients.find((item) => item.id === sale.clientId)?.name || '';
     const product = state.products.find((item) => item.id === sale.productId)?.name || '';
-    return `${client} ${product} ${sale.note}`.toLowerCase().includes(search.toLowerCase());
+    return `${client} ${product} ${sale.note} ${sale.invoice?.name || ''}`.toLowerCase().includes(search.toLowerCase());
   });
 
   function addSale(event) {
@@ -1084,9 +1126,40 @@ function Sales({ state, updateState }) {
       subtotal,
       iva,
       total: subtotal + iva,
+      invoice: draftInvoice,
     };
     updateState({ ...state, sales: [next, ...state.sales] });
     setDraft({ ...draft, quantity: 1, note: '' });
+    setDraftInvoice(null);
+  }
+
+  async function setDraftInvoiceFile(file) {
+    try {
+      setInvoiceError('');
+      setDraftInvoice(await readInvoiceFile(file));
+    } catch (error) {
+      setInvoiceError(error.message);
+    }
+  }
+
+  async function uploadInvoiceForSale(saleId, file) {
+    try {
+      setInvoiceError('');
+      const invoice = await readInvoiceFile(file);
+      updateState({
+        ...state,
+        sales: state.sales.map((sale) => (sale.id === saleId ? { ...sale, invoice } : sale)),
+      });
+    } catch (error) {
+      setInvoiceError(error.message);
+    }
+  }
+
+  function removeInvoiceFromSale(saleId) {
+    updateState({
+      ...state,
+      sales: state.sales.map((sale) => (sale.id === saleId ? { ...sale, invoice: null } : sale)),
+    });
   }
 
   async function copySriSummary(sale) {
@@ -1104,6 +1177,7 @@ function Sales({ state, updateState }) {
       `IVA: ${money(sale.iva)}`,
       `Total: ${money(sale.total)}`,
       `Nota: ${sale.note || ''}`,
+      `Factura PDF: ${sale.invoice?.name || 'Sin factura cargada'}`,
     ].join('\n');
     await navigator.clipboard.writeText(text);
     setCopiedId(sale.id);
@@ -1133,6 +1207,16 @@ function Sales({ state, updateState }) {
             </select>
           </Field>
           <Field label="Nota"><textarea value={draft.note} onChange={(e) => setDraft({ ...draft, note: e.target.value })} /></Field>
+          <div className="field-block">
+            <span>Factura PDF opcional</span>
+            <InvoiceUploadBox
+              id="invoice-new-sale"
+              invoice={draftInvoice}
+              onFile={setDraftInvoiceFile}
+              onRemove={() => setDraftInvoice(null)}
+            />
+          </div>
+          {invoiceError && <p className="form-error">{invoiceError}</p>}
           <div className="live-total">
             <span>Subtotal {money(previewSubtotal)}</span>
             <span>IVA {money(previewIva)}</span>
@@ -1144,7 +1228,7 @@ function Sales({ state, updateState }) {
       <DataPanel title="Historial de ventas" search={search} setSearch={setSearch}>
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Total</th><th>Estado</th><th>Factura</th><th></th></tr>
+            <tr><th>Fecha</th><th>Cliente</th><th>Producto</th><th>Total</th><th>Estado</th><th>Factura PDF</th><th>SRI</th><th></th></tr>
           </thead>
           <tbody>
             {rows.map((sale) => (
@@ -1154,6 +1238,14 @@ function Sales({ state, updateState }) {
                 <td>{state.products.find((product) => product.id === sale.productId)?.name}</td>
                 <td>{money(sale.total)}</td>
                 <td><span className={`status ${sale.status === 'Cobrado' ? 'paid' : 'pending'}`}>{sale.status}</span></td>
+                <td>
+                  <InvoiceActions
+                    sale={sale}
+                    onUpload={(file) => uploadInvoiceForSale(sale.id, file)}
+                    onRemove={() => removeInvoiceFromSale(sale.id)}
+                    onPreview={() => setInvoicePreview(sale.invoice)}
+                  />
+                </td>
                 <td>
                   <div className="sri-actions">
                     <button className="sri-link" onClick={() => copySriSummary(sale)}>
@@ -1170,6 +1262,7 @@ function Sales({ state, updateState }) {
           </tbody>
         </table>
       </DataPanel>
+      <InvoicePreviewModal invoice={invoicePreview} onClose={() => setInvoicePreview(null)} />
     </main>
   );
 }
@@ -1342,12 +1435,14 @@ function Clients({ state, updateState }) {
   );
 }
 
-function HistoryView({ state }) {
+function HistoryView({ state, updateState }) {
   const availableYears = [...new Set(state.sales.map((sale) => sale.date?.slice(0, 4)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
   const [year, setYear] = useState(availableYears[0] || today.slice(0, 4));
   const [month, setMonth] = useState('');
   const [day, setDay] = useState('');
   const [focusInsight, setFocusInsight] = useState('');
+  const [invoicePreview, setInvoicePreview] = useState(null);
+  const [invoiceError, setInvoiceError] = useState('');
   const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`);
   const days = month ? calendarDaysForMonth(month).filter(Boolean) : [];
   const rows = state.sales
@@ -1409,6 +1504,26 @@ function HistoryView({ state }) {
     };
   }
 
+  async function uploadInvoiceForSale(saleId, file) {
+    try {
+      setInvoiceError('');
+      const invoice = await readInvoiceFile(file);
+      updateState({
+        ...state,
+        sales: state.sales.map((sale) => (sale.id === saleId ? { ...sale, invoice } : sale)),
+      });
+    } catch (error) {
+      setInvoiceError(error.message);
+    }
+  }
+
+  function removeInvoiceFromSale(saleId) {
+    updateState({
+      ...state,
+      sales: state.sales.map((sale) => (sale.id === saleId ? { ...sale, invoice: null } : sale)),
+    });
+  }
+
   function exportAccountantReport() {
     const byMonth = Object.entries(grouped).map(([monthKey, daysByMonth]) => {
       const monthRows = Object.values(daysByMonth).flat();
@@ -1433,6 +1548,7 @@ function HistoryView({ state }) {
         sale.subtotal,
         sale.iva,
         sale.total,
+        sale.invoice?.name || '',
         sale.note || '',
       ];
     });
@@ -1457,7 +1573,7 @@ function HistoryView({ state }) {
       },
       {
         title: 'Detalle de ventas',
-        headers: ['Fecha', 'Cliente', 'RUC/Cedula', 'Producto', 'Cantidad', 'Estado', 'Subtotal', 'IVA', 'Total', 'Nota'],
+        headers: ['Fecha', 'Cliente', 'RUC/Cedula', 'Producto', 'Cantidad', 'Estado', 'Subtotal', 'IVA', 'Total', 'Factura PDF', 'Nota'],
         rows: detailRows,
         textColumns: 6,
       },
@@ -1563,6 +1679,7 @@ function HistoryView({ state }) {
           <History size={20} />
         </div>
         <div className="history-tree">
+          {invoiceError && <p className="form-error">{invoiceError}</p>}
           {Object.entries(grouped).map(([monthKey, daysByMonth]) => (
             <div className="history-group" key={monthKey}>
               <h3>{labelForMonth(monthKey)}</h3>
@@ -1578,11 +1695,20 @@ function HistoryView({ state }) {
                       const { client, product } = saleDetail(sale);
                       return (
                         <div className="history-sale" key={sale.id}>
-                          <div>
+                          <div className="history-sale-main">
                             <strong>{client?.name}</strong>
                             <span>{product?.name} · {sale.quantity} unidad(es)</span>
                           </div>
-                          <b>{money(sale.total)}</b>
+                          <div className="history-sale-actions">
+                            <b>{money(sale.total)}</b>
+                            <InvoiceActions
+                              compact
+                              sale={sale}
+                              onUpload={(file) => uploadInvoiceForSale(sale.id, file)}
+                              onRemove={() => removeInvoiceFromSale(sale.id)}
+                              onPreview={() => setInvoicePreview(sale.invoice)}
+                            />
+                          </div>
                         </div>
                       );
                     })}
@@ -1608,6 +1734,7 @@ function HistoryView({ state }) {
           <p><strong>Exportación:</strong> descarga el periodo filtrado para revisión contable y respaldo externo.</p>
         </div>
       </section>
+      <InvoicePreviewModal invoice={invoicePreview} onClose={() => setInvoicePreview(null)} />
     </main>
   );
 }
@@ -1684,6 +1811,103 @@ function ProfitChart({ title, rows, selected, onSelect }) {
           </button>
         ))}
         {!sorted.length && <p className="empty-state">Cuando existan ventas se calculará la rentabilidad estimada.</p>}
+      </div>
+    </div>
+  );
+}
+
+function InvoiceUploadBox({ id, invoice, onFile, onRemove }) {
+  return (
+    <div className={`invoice-upload-box ${invoice ? 'has-file' : ''}`}>
+      <input
+        id={id}
+        type="file"
+        accept="application/pdf"
+        onChange={(event) => {
+          const [file] = event.target.files || [];
+          if (file) onFile(file);
+          event.target.value = '';
+        }}
+      />
+      <label htmlFor={id}>
+        <UploadCloud size={18} />
+        <span>{invoice ? 'Cambiar PDF' : 'Subir factura PDF'}</span>
+      </label>
+      {invoice && (
+        <div className="invoice-file">
+          <FileText size={16} />
+          <span>{invoice.name}</span>
+          <small>{formatBytes(invoice.size)}</small>
+          <button type="button" onClick={onRemove} aria-label="Quitar factura"><X size={14} /></button>
+        </div>
+      )}
+      <small>Máximo {formatBytes(INVOICE_MAX_BYTES)} por factura.</small>
+    </div>
+  );
+}
+
+function InvoiceActions({ sale, onUpload, onRemove, onPreview, compact = false }) {
+  const inputId = `invoice-${sale.id}`;
+  return (
+    <div className={`invoice-actions ${compact ? 'compact' : ''}`}>
+      <input
+        id={inputId}
+        type="file"
+        accept="application/pdf"
+        onChange={(event) => {
+          const [file] = event.target.files || [];
+          if (file) onUpload(file);
+          event.target.value = '';
+        }}
+      />
+      {sale.invoice ? (
+        <>
+          <button className="invoice-chip" type="button" onClick={onPreview}>
+            <Eye size={14} /> Ver
+          </button>
+          <a className="invoice-chip" href={sale.invoice.dataUrl} download={sale.invoice.name}>
+            <Download size={14} /> PDF
+          </a>
+          <label className="invoice-chip" htmlFor={inputId}>
+            <UploadCloud size={14} /> Cambiar
+          </label>
+          <button className="invoice-remove" type="button" onClick={onRemove} aria-label="Quitar factura">
+            <X size={14} />
+          </button>
+          {!compact && <small title={sale.invoice.name}>{sale.invoice.name} · {formatBytes(sale.invoice.size)}</small>}
+        </>
+      ) : (
+        <>
+          <label className="invoice-chip empty" htmlFor={inputId}>
+            <UploadCloud size={14} /> Cargar
+          </label>
+          {!compact && <small>Sin factura</small>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function InvoicePreviewModal({ invoice, onClose }) {
+  if (!invoice) return null;
+  return (
+    <div className="invoice-modal" role="dialog" aria-modal="true">
+      <div className="invoice-modal-card">
+        <div className="invoice-modal-head">
+          <div>
+            <p className="eyebrow">Factura PDF</p>
+            <h2>{invoice.name}</h2>
+            <span>{formatBytes(invoice.size)} · vista rápida</span>
+          </div>
+          <button className="icon-button" onClick={onClose} aria-label="Cerrar visor"><X size={18} /></button>
+        </div>
+        <iframe src={invoice.dataUrl} title={`Factura ${invoice.name}`} />
+        <div className="button-row">
+          <a className="primary-button" href={invoice.dataUrl} download={invoice.name}>
+            <Download size={16} /> Descargar PDF
+          </a>
+          <button className="ghost-button" type="button" onClick={onClose}>Cerrar</button>
+        </div>
       </div>
     </div>
   );
