@@ -63,6 +63,7 @@ const today = localDateKey(new Date());
 const currentMonth = today.slice(0, 7);
 const SRI_FACTURADOR_URL = import.meta.env.VITE_SRI_FACTURADOR_URL || 'https://facturadorsri.sri.gob.ec/portal-facturadorsri-internet/pages/inicio.html';
 const SRI_FACTURACION_INFO_URL = 'https://www.sri.gob.ec/facturacion-electronica';
+const WHATSAPP_URL = import.meta.env.VITE_WHATSAPP_URL || '';
 const INVOICE_MAX_BYTES = 1.2 * 1024 * 1024;
 const cloudConfigured = cloudReady;
 const allowPublicSignup = !cloudConfigured || import.meta.env.VITE_ALLOW_PUBLIC_SIGNUP === 'true';
@@ -721,7 +722,7 @@ function App() {
 
 function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
   const [mode, setMode] = useState('login');
-  const [showStore, setShowStore] = useState(false);
+  const [showStore, setShowStore] = useState(true);
   const [name, setName] = useState('Nuevo usuario Dreams');
   const [email, setEmail] = useState(cloudConfigured ? '' : 'admin@dreams.ec');
   const [password, setPassword] = useState(cloudConfigured ? '' : 'Dreams2026!');
@@ -846,9 +847,17 @@ function PublicStorefront({ onEnter }) {
     <main className="public-store-page">
       <header className="public-store-nav">
         <BrandLogo variant="inverse" size="sidebar" />
-        <button className="primary-button light" onClick={onEnter}>
-          Ingresar al sistema
-        </button>
+        <nav aria-label="Navegación de tienda Dreams">
+          <a href="#productos">Productos</a>
+          <a href="#historia">Historia</a>
+          <a href="#galeria">Galería</a>
+        </nav>
+        <div className="public-nav-actions">
+          <WhatsAppButton className="ghost-button white" label="WhatsApp" />
+          <button className="primary-button light" onClick={onEnter}>
+            Contabilidad
+          </button>
+        </div>
       </header>
       <Storefront state={seedData} publicMode onEnter={onEnter} />
     </main>
@@ -1156,6 +1165,21 @@ function BrandLogo({ variant = 'primary', size = 'default' }) {
   );
 }
 
+function WhatsAppButton({ className = 'primary-button', label = 'Cotizar por WhatsApp' }) {
+  if (!WHATSAPP_URL) {
+    return (
+      <button className={`${className} disabled-link`} type="button" disabled title="Pásame tu enlace de WhatsApp para activar este botón.">
+        {label}
+      </button>
+    );
+  }
+  return (
+    <a className={className} href={WHATSAPP_URL} target="_blank" rel="noreferrer">
+      {label} <ExternalLink size={16} />
+    </a>
+  );
+}
+
 function Storefront({ state, setView, publicMode = false, onEnter }) {
   const categories = ['Todo', ...new Set(serviceCatalog.map((service) => service.group))];
   const [category, setCategory] = useState('Todo');
@@ -1179,11 +1203,15 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             Un escaparate rápido para mostrar lo que Dreams vende, preparar cotizaciones y conectar cada pedido con la contabilidad.
           </p>
           <div className="store-actions">
-            <button className="primary-button" onClick={() => goTo('ventas')}>
-              {publicMode ? 'Solicitar acceso' : 'Registrar pedido'} <ArrowRight size={18} />
-            </button>
+            {publicMode ? (
+              <WhatsAppButton />
+            ) : (
+              <button className="primary-button" onClick={() => goTo('ventas')}>
+                Registrar pedido <ArrowRight size={18} />
+              </button>
+            )}
             <button className="ghost-button white" onClick={() => goTo('productos')}>
-              {publicMode ? 'Entrar al sistema' : 'Editar productos'}
+              {publicMode ? 'Acceso contable' : 'Editar productos'}
             </button>
           </div>
         </div>
@@ -1199,13 +1227,13 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
         </div>
       </section>
 
-      <section className="store-section">
+      <section className="store-section" id="productos">
         <div className="store-section-head">
           <div>
-            <p className="eyebrow">Servicios principales</p>
-            <h2>Todo lo que puede vender Dreams</h2>
+            <p className="eyebrow">Tienda Dreams</p>
+            <h2>Productos y servicios por categoría</h2>
           </div>
-          <span>Catálogo ligero, editable y pensado para crecer sin cargar archivos pesados.</span>
+          <span>Cada línea está pensada como vitrina comercial: clara, vendible y lista para cotizar.</span>
         </div>
         <div className="category-pills" aria-label="Categorías de servicios">
           {categories.map((item) => (
@@ -1230,7 +1258,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
         </div>
       </section>
 
-      <section className="story-section">
+      <section className="story-section" id="historia">
         <div className="story-copy">
           <p className="eyebrow">Quiénes somos</p>
           <h2>Dreams nace en Tulcán y crece con la publicidad real de cada negocio.</h2>
@@ -1251,7 +1279,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
         </div>
       </section>
 
-      <section className="store-section">
+      <section className="store-section" id="galeria">
         <div className="store-section-head">
           <div>
             <p className="eyebrow">Galería real</p>
@@ -1276,12 +1304,18 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
 
       <section className="store-section store-split">
         <div className="store-blue-card">
-          <p className="eyebrow">Flujo recomendado</p>
-          <h2>De vitrina a venta registrada</h2>
-          <p>La idea es que el cliente vea el servicio, tú cotices, registres la venta, subas la factura PDF y luego revises rentabilidad en histórico.</p>
-          <button className="primary-button light" onClick={() => goTo('historico')}>
-            Ver histórico <BarChart3 size={18} />
-          </button>
+          <p className="eyebrow">Ecosistema interno</p>
+          <h2>La tienda vende; la contabilidad organiza.</h2>
+          <p>El cliente ve el servicio, tú cotizas, registras la venta, subes la factura PDF y luego revisas clientes, meses fuertes y rentabilidad desde el panel privado.</p>
+          {publicMode ? (
+            <button className="primary-button light" onClick={() => goTo('panel')}>
+              Acceder a contabilidad <LockKeyhole size={18} />
+            </button>
+          ) : (
+            <button className="primary-button light" onClick={() => goTo('historico')}>
+              Ver histórico <BarChart3 size={18} />
+            </button>
+          )}
         </div>
         <div className="store-product-list">
           <div className="section-title">

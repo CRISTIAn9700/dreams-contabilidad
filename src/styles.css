@@ -31,6 +31,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   color: var(--ink);
@@ -1170,6 +1174,34 @@ button.sri-link {
   backdrop-filter: blur(12px);
 }
 
+.public-store-nav nav,
+.public-nav-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.public-store-nav nav a {
+  border-radius: 999px;
+  padding: 9px 12px;
+  color: rgba(255, 255, 255, 0.82);
+  text-decoration: none;
+  font-weight: 850;
+  transition: color 0.18s ease, background 0.18s ease, transform 0.18s var(--spring);
+}
+
+.public-store-nav nav a:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.13);
+  transform: translateY(-1px);
+}
+
+.disabled-link {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
 .public-store-page .storefront {
   max-width: 1440px;
   margin: 0 auto;
@@ -2261,8 +2293,26 @@ button.sri-link {
   .quick-actions,
   .quick-actions button,
   .button-row,
-  .button-row a {
+  .button-row a,
+  .public-nav-actions,
+  .public-nav-actions button,
+  .public-nav-actions a,
+  .public-store-nav nav {
     width: 100%;
+  }
+
+  .public-store-nav {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .public-store-nav nav {
+    justify-content: space-between;
+  }
+
+  .public-store-nav nav a {
+    flex: 1;
+    text-align: center;
   }
 
   .install-help {
