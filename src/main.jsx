@@ -220,6 +220,72 @@ const seedData = {
   ],
 };
 
+const serviceCatalog = [
+  {
+    title: 'Corte y grabado láser CO2',
+    category: 'Producción premium',
+    group: 'Láser y materiales',
+    description: 'Cortes precisos en acrílico, MDF, madera, cartón y piezas promocionales con acabados limpios.',
+    price: 'Desde $12',
+    tags: ['Acrílico', 'MDF', 'Grabado'],
+    accent: 'laser',
+  },
+  {
+    title: 'Letreros 3D y señalética',
+    category: 'Identidad visual',
+    group: 'Publicidad física',
+    description: 'Letras corpóreas, rótulos, señalética interior y piezas para locales comerciales.',
+    price: 'Cotización',
+    tags: ['3D', 'Locales', 'Marca'],
+    accent: 'sign',
+  },
+  {
+    title: 'Plotter de corte',
+    category: 'Vinilos y adhesivos',
+    group: 'Publicidad física',
+    description: 'Vinilos decorativos, adhesivos de marca, etiquetas, stickers y cortes para activaciones.',
+    price: 'Desde $8',
+    tags: ['Vinil', 'Stickers', 'Etiquetas'],
+    accent: 'plotter',
+  },
+  {
+    title: 'DTF y sublimación',
+    category: 'Textiles',
+    group: 'Textiles personalizados',
+    description: 'Estampados para camisetas, uniformes, gorras, bolsos, tazas y productos promocionales.',
+    price: 'Desde $5',
+    tags: ['DTF', 'Sublimación', 'Uniformes'],
+    accent: 'textile',
+  },
+  {
+    title: 'Tarjetas, trípticos y dípticos',
+    category: 'Diseño impreso',
+    group: 'Diseño e impresión',
+    description: 'Material gráfico comercial listo para presentar tu negocio con una línea visual coherente.',
+    price: 'Desde $18',
+    tags: ['Diseño', 'Impresión', 'Promoción'],
+    accent: 'print',
+  },
+  {
+    title: 'Banners y acrílicos especiales',
+    category: 'Campañas',
+    group: 'Láser y materiales',
+    description: 'Piezas de alto impacto para ferias, vitrinas, eventos, campañas y exhibiciones.',
+    price: 'Cotización',
+    tags: ['Banners', 'Eventos', 'Exhibición'],
+    accent: 'banner',
+  },
+  {
+    title: 'Marketing digital y asesoría web',
+    category: 'Crecimiento online',
+    group: 'Digital y web',
+    description: 'Acompañamiento para presencia digital, campañas, contenido, web y comunicación de marca.',
+    price: 'Plan mensual',
+    tags: ['Redes', 'Web', 'Asesoría'],
+    accent: 'digital',
+  },
+];
+
 function uid(prefix) {
   return `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
 }
@@ -396,7 +462,7 @@ function downloadExcelHtml(filename, sheets) {
     <style>
       body { font-family: Arial, sans-serif; }
       h1 { color: #071933; }
-      h2 { color: #f97316; margin-top: 28px; }
+      h2 { color: #0050c3; margin-top: 28px; }
       table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
       th { background: #071933; color: #fff; }
       th, td { border: 1px solid #dce3ee; padding: 8px; text-align: left; }
@@ -644,6 +710,7 @@ function App() {
       {view === 'ventas' && <Sales state={state} updateState={updateState} />}
       {view === 'gastos' && <Expenses state={state} updateState={updateState} />}
       {view === 'productos' && <Products state={state} updateState={updateState} />}
+      {view === 'tienda' && <Storefront state={state} setView={setView} />}
       {view === 'clientes' && <Clients state={state} updateState={updateState} />}
       {view === 'historico' && <HistoryView state={state} updateState={updateState} />}
       {view === 'reportes' && <Reports state={state} />}
@@ -654,6 +721,7 @@ function App() {
 
 function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
   const [mode, setMode] = useState('login');
+  const [showStore, setShowStore] = useState(false);
   const [name, setName] = useState('Nuevo usuario Dreams');
   const [email, setEmail] = useState(cloudConfigured ? '' : 'admin@dreams.ec');
   const [password, setPassword] = useState(cloudConfigured ? '' : 'Dreams2026!');
@@ -694,6 +762,10 @@ function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
     }
   }
 
+  if (showStore) {
+    return <PublicStorefront onEnter={() => setShowStore(false)} />;
+  }
+
   return (
     <main className="login-page">
       <section className="login-hero" style={{ '--hero-image': `url("${assetPath('images/laser-co2-hero.png')}")` }}>
@@ -708,6 +780,9 @@ function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
           <span>USD</span>
           <span>{cloudConfigured ? 'Nube activa' : 'Modo local'}</span>
         </div>
+        <button className="hero-store-link" type="button" onClick={() => setShowStore(true)}>
+          Ver tienda y servicios <ArrowRight size={18} />
+        </button>
       </section>
       <form className="login-card" onSubmit={submit}>
         <div>
@@ -762,6 +837,20 @@ function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
             : mode === 'login' ? 'Demo: admin@dreams.ec / Dreams2026!' : 'Este usuario se guarda localmente en este navegador.'}
         </p>
       </form>
+    </main>
+  );
+}
+
+function PublicStorefront({ onEnter }) {
+  return (
+    <main className="public-store-page">
+      <header className="public-store-nav">
+        <BrandLogo variant="inverse" size="sidebar" />
+        <button className="primary-button light" onClick={onEnter}>
+          Ingresar al sistema
+        </button>
+      </header>
+      <Storefront state={seedData} publicMode onEnter={onEnter} />
     </main>
   );
 }
@@ -830,6 +919,7 @@ function Shell({ children, session, view, setView, logout, syncStatus, localCloc
     ['ventas', 'Ventas', ReceiptText],
     ['gastos', 'Gastos', CircleDollarSign],
     ['productos', 'Productos', Boxes],
+    ['tienda', 'Tienda', Sparkles],
     ['clientes', 'Clientes', UsersRound],
     ['historico', 'Histórico', History],
     ['reportes', 'Reportes', BarChart3],
@@ -901,6 +991,7 @@ function pageTitle(view) {
     ventas: 'Registro de ventas',
     gastos: 'Registro de gastos',
     productos: 'Productos y servicios',
+    tienda: 'Tienda Dreams',
     clientes: 'Clientes',
     historico: 'Histórico de ventas',
     reportes: 'Reportes Ecuador',
@@ -929,11 +1020,12 @@ function Dashboard({ state, setView, localClock }) {
       <section className="hero-panel">
         <div>
           <p className="eyebrow">{localClock.monthLabel}</p>
-          <h2>Visión general de Dreams Contabilidad</h2>
-          <p>Ventas, gastos, IVA y flujo de caja para operar tu agencia de publicidad con láser CO2 desde {LOCAL_LOCATION}.</p>
+          <h2>Contabilidad y ventas para una agencia que produce.</h2>
+          <p>Control financiero, catálogo comercial, servicios láser, impresión y productos personalizados desde {LOCAL_LOCATION}.</p>
         </div>
         <div className="quick-actions">
           <button onClick={() => setView('ventas')}><FilePlus2 size={18} /> Nueva venta <ArrowRight size={16} /></button>
+          <button onClick={() => setView('tienda')}><Sparkles size={18} /> Ver tienda <ArrowRight size={16} /></button>
           <button onClick={() => setView('gastos')}><CircleDollarSign size={18} /> Nuevo gasto <ArrowRight size={16} /></button>
         </div>
       </section>
@@ -991,6 +1083,24 @@ function Dashboard({ state, setView, localClock }) {
       <section className="panel">
         <div className="section-title">
           <div>
+            <p className="eyebrow">Tienda</p>
+            <h2>Servicios listos para vender</h2>
+          </div>
+          <Sparkles size={20} />
+        </div>
+        <div className="catalog-mini">
+          {serviceCatalog.slice(0, 3).map((service) => (
+            <button key={service.title} onClick={() => setView('tienda')}>
+              <span>{service.category}</span>
+              <strong>{service.title}</strong>
+              <small>{service.price}</small>
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="panel">
+        <div className="section-title">
+          <div>
             <p className="eyebrow">SRI</p>
             <h2>Facturación electrónica</h2>
           </div>
@@ -1039,16 +1149,161 @@ function Metric({ title, value, hint, tone = '' }) {
 }
 
 function BrandLogo({ variant = 'primary', size = 'default' }) {
-  const [fallback, setFallback] = useState(false);
-  const src = assetPath(variant === 'inverse' ? 'brand/dreams-logo-inverse.png' : 'brand/dreams-logo-primary.png');
   return (
     <div className={`brand-logo ${size} ${variant}`}>
-      {fallback ? (
-        <span>Dreams</span>
-      ) : (
-        <img src={src} alt="Dreams" onError={() => setFallback(true)} />
-      )}
+      <span>Dreams</span>
     </div>
+  );
+}
+
+function Storefront({ state, setView, publicMode = false, onEnter }) {
+  const categories = ['Todo', ...new Set(serviceCatalog.map((service) => service.group))];
+  const [category, setCategory] = useState('Todo');
+  const filteredServices = category === 'Todo' ? serviceCatalog : serviceCatalog.filter((service) => service.group === category);
+  const visibleProducts = state.products.slice(0, 4);
+  const goTo = (view) => {
+    if (publicMode) {
+      onEnter?.();
+      return;
+    }
+    setView(view);
+  };
+  return (
+    <main className="storefront">
+      <section className="store-hero">
+        <div className="store-hero-copy">
+          <BrandLogo variant="inverse" size="store" />
+          <p className="eyebrow">Tienda publicitaria</p>
+          <h2>Productos personalizados, producción láser y piezas de marca para negocios.</h2>
+          <p>
+            Un escaparate rápido para mostrar lo que Dreams vende, preparar cotizaciones y conectar cada pedido con la contabilidad.
+          </p>
+          <div className="store-actions">
+            <button className="primary-button" onClick={() => goTo('ventas')}>
+              {publicMode ? 'Solicitar acceso' : 'Registrar pedido'} <ArrowRight size={18} />
+            </button>
+            <button className="ghost-button white" onClick={() => goTo('productos')}>
+              {publicMode ? 'Entrar al sistema' : 'Editar productos'}
+            </button>
+          </div>
+        </div>
+        <div className="store-showcase" aria-label="Vista conceptual de producción Dreams">
+          <div className="laser-card">
+            <span />
+            <strong>Corte CO2</strong>
+            <small>Acrílico · MDF · Grabado</small>
+          </div>
+          <div className="floating-ticket one">DTF</div>
+          <div className="floating-ticket two">Letreros 3D</div>
+          <div className="floating-ticket three">Sublimación</div>
+        </div>
+      </section>
+
+      <section className="store-section">
+        <div className="store-section-head">
+          <div>
+            <p className="eyebrow">Servicios principales</p>
+            <h2>Todo lo que puede vender Dreams</h2>
+          </div>
+          <span>Catálogo ligero, editable y pensado para crecer sin cargar archivos pesados.</span>
+        </div>
+        <div className="category-pills" aria-label="Categorías de servicios">
+          {categories.map((item) => (
+            <button key={item} className={category === item ? 'active' : ''} onClick={() => setCategory(item)}>
+              {item}
+            </button>
+          ))}
+        </div>
+        <div className="service-grid">
+          {filteredServices.map((service, index) => (
+            <article className={`service-card ${service.accent}`} key={service.title} style={{ '--delay': `${index * 0.05}s` }}>
+              <div className="service-icon"><Sparkles size={18} /></div>
+              <p>{service.category}</p>
+              <h3>{service.title}</h3>
+              <span>{service.description}</span>
+              <div className="service-tags">
+                {service.tags.map((tag) => <small key={tag}>{tag}</small>)}
+              </div>
+              <strong>{service.price}</strong>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="story-section">
+        <div className="story-copy">
+          <p className="eyebrow">Quiénes somos</p>
+          <h2>Dreams nace en Tulcán y crece con la publicidad real de cada negocio.</h2>
+          <p>
+            Somos una empresa del norte del Ecuador dedicada a crear, preparar, armar e instalar publicidad física y digital.
+            Desde 2012, el proyecto Dreams ha acumulado experiencia en producción publicitaria, atención a marcas locales,
+            marketing digital y soluciones web para empresas que quieren verse mejor y vender más.
+          </p>
+          <p>
+            Hoy Dreams se consolida como uno de los equipos con mayor trayectoria en producción de publicidad física dentro de Tulcán,
+            combinando taller, diseño, instalación, asesoría y tecnología en un mismo ecosistema.
+          </p>
+        </div>
+        <div className="story-timeline">
+          <div><strong>2012</strong><span>Inicio del proyecto Dreams.</span></div>
+          <div><strong>Tulcán</strong><span>Producción publicitaria en el norte del Ecuador.</span></div>
+          <div><strong>360°</strong><span>Publicidad física, digital, marketing y web.</span></div>
+        </div>
+      </section>
+
+      <section className="store-section">
+        <div className="store-section-head">
+          <div>
+            <p className="eyebrow">Galería real</p>
+            <h2>Espacio listo para fotos y videos de la empresa</h2>
+          </div>
+          <span>Cuando me pases fotos inéditas, reemplazo estos bloques por imágenes reales optimizadas para web.</span>
+        </div>
+        <div className="media-grid">
+          {['Máquina láser en producción', 'Letreros instalados', 'Trabajos en acrílico', 'Equipo Dreams'].map((item, index) => (
+            <article className="media-placeholder" key={item}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <strong>{item}</strong>
+              <small>Foto real pendiente</small>
+            </article>
+          ))}
+        </div>
+        <div className="media-guidance">
+          <strong>Formatos ideales:</strong>
+          <span>Fotos en JPG, PNG o WebP. Videos en MP4, máximo 20-40 segundos para web. Yo los optimizo antes de publicarlos.</span>
+        </div>
+      </section>
+
+      <section className="store-section store-split">
+        <div className="store-blue-card">
+          <p className="eyebrow">Flujo recomendado</p>
+          <h2>De vitrina a venta registrada</h2>
+          <p>La idea es que el cliente vea el servicio, tú cotices, registres la venta, subas la factura PDF y luego revises rentabilidad en histórico.</p>
+          <button className="primary-button light" onClick={() => goTo('historico')}>
+            Ver histórico <BarChart3 size={18} />
+          </button>
+        </div>
+        <div className="store-product-list">
+          <div className="section-title">
+            <div>
+              <p className="eyebrow">Productos del sistema</p>
+              <h2>Inventario conectado</h2>
+            </div>
+            <Boxes size={20} />
+          </div>
+          {visibleProducts.map((product) => (
+            <div className="store-product-row" key={product.id}>
+              <div>
+                <strong>{product.name}</strong>
+                <span>{product.category}</span>
+              </div>
+              <b>{money(product.price)}</b>
+            </div>
+          ))}
+          <button className="ghost-button" onClick={() => goTo('productos')}>{publicMode ? 'Entrar para gestionar' : 'Gestionar catálogo'}</button>
+        </div>
+      </section>
+    </main>
   );
 }
 
