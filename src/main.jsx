@@ -1325,6 +1325,7 @@ function HistoryView({ state }) {
   const [year, setYear] = useState(availableYears[0] || today.slice(0, 4));
   const [month, setMonth] = useState('');
   const [day, setDay] = useState('');
+  const [focusInsight, setFocusInsight] = useState('');
   const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`);
   const days = month ? calendarDaysForMonth(month).filter(Boolean) : [];
   const rows = state.sales
@@ -1341,6 +1342,43 @@ function HistoryView({ state }) {
     acc[monthKey][dayKey].push(sale);
     return acc;
   }, {});
+  const enrichedRows = rows.map((sale) => {
+    const client = state.clients.find((item) => item.id === sale.clientId);
+    const product = state.products.find((item) => item.id === sale.productId);
+    const estimatedCost = Number(product?.cost || 0) * Number(sale.quantity || 0);
+    return {
+      ...sale,
+      clientName: client?.name || 'Cliente sin nombre',
+      productName: product?.name || 'Producto sin nombre',
+      estimatedCost,
+      estimatedProfit: Number(sale.subtotal || 0) - estimatedCost,
+    };
+  });
+  const clientStats = summarizeBy(enrichedRows, (sale) => sale.clientName)
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
+  const monthStats = months.map((monthKey) => {
+    const monthRows = enrichedRows.filter((sale) => sale.date?.startsWith(monthKey));
+    return summarizeRows(labelForMonth(monthKey), monthRows);
+  });
+  const activeMonthStats = monthStats.filter((item) => item.count > 0);
+  const dayStats = Object.entries(
+    enrichedRows.reduce((acc, sale) => {
+      acc[sale.date] ||= [];
+      acc[sale.date].push(sale);
+      return acc;
+    }, {})
+  )
+    .map(([dateKey, dateRows]) => summarizeRows(labelForDay(dateKey), dateRows, dateKey))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 7);
+  const productStats = summarizeBy(enrichedRows, (sale) => sale.productName)
+    .sort((a, b) => b.profit - a.profit)
+    .slice(0, 5);
+  const bestClient = clientStats[0];
+  const bestMonth = [...activeMonthStats].sort((a, b) => b.profit - a.profit)[0];
+  const bestDay = dayStats[0];
+  const bestProduct = productStats[0];
 
   function saleDetail(sale) {
     return {
@@ -1450,6 +1488,50 @@ function HistoryView({ state }) {
           </Field>
         </div>
       </section>
+      <section className="panel analytics-panel wide">
+        <div className="section-title">
+          <div>
+            <p className="eyebrow">Análisis estadístico</p>
+            <h2>Clientes, temporadas y rentabilidad</h2>
+          </div>
+          <BarChart3 size={20} />
+        </div>
+        <div className="insight-grid">
+          <InsightCard title="Cliente principal" value={bestClient?.label || 'Sin datos'} hint={bestClient ? `${bestClient.count} venta(s) · ${money(bestClient.total)}` : 'Registra ventas para analizar'} />
+          <InsightCard title="Mes más rentable" value={bestMonth?.label || 'Sin datos'} hint={bestMonth ? `Utilidad estimada ${money(bestMonth.profit)}` : 'Aparecerá con más ventas'} />
+          <InsightCard title="Día más fuerte" value={bestDay?.label || 'Sin datos'} hint={bestDay ? `${money(bestDay.total)} facturado` : 'Filtra o registra ventas'} />
+          <InsightCard title="Producto estrella" value={bestProduct?.label || 'Sin datos'} hint={bestProduct ? `Margen estimado ${money(bestProduct.profit)}` : 'Según precio y costo'} />
+        </div>
+        <div className="analytics-grid">
+          <InsightBarChart
+            title="Clientes que más compran"
+            rows={clientStats}
+            selected={focusInsight}
+            onSelect={setFocusInsight}
+            empty="Aún no hay clientes con ventas en este periodo."
+          />
+          <InsightBarChart
+            title="Meses con mayor facturación"
+            rows={activeMonthStats}
+            selected={focusInsight}
+            onSelect={setFocusInsight}
+            empty="Selecciona un año con ventas para ver meses fuertes."
+          />
+          <InsightBarChart
+            title="Días pico de venta"
+            rows={dayStats}
+            selected={focusInsight}
+            onSelect={setFocusInsight}
+            empty="Aún no hay días con ventas en este filtro."
+          />
+          <ProfitChart
+            title="Meses más rentables"
+            rows={activeMonthStats}
+            selected={focusInsight}
+            onSelect={setFocusInsight}
+          />
+        </div>
+      </section>
       <section className="panel wide">
         <div className="section-title">
           <div>
@@ -1505,6 +1587,83 @@ function HistoryView({ state }) {
         </div>
       </section>
     </main>
+  );
+}
+
+function summarizeRows(label, rows, id = label) {
+  return rows.reduce((acc, sale) => ({
+    ...acc,
+    count: acc.count + 1,
+    quantity: acc.quantity + Number(sale.quantity || 0),
+    subtotal: acc.subtotal + Number(sale.subtotal || 0),
+    total: acc.total + Number(sale.total || 0),
+    profit: acc.profit + Number(sale.estimatedProfit || 0),
+  }), { id, label, count: 0, quantity: 0, subtotal: 0, total: 0, profit: 0 });
+}
+
+function summarizeBy(rows, getLabel) {
+  const grouped = rows.reduce((acc, sale) => {
+    const label = getLabel(sale);
+    acc[label] ||= [];
+    acc[label].push(sale);
+    return acc;
+  }, {});
+  return Object.entries(grouped).map(([label, saleRows]) => summarizeRows(label, saleRows));
+}
+
+function InsightCard({ title, value, hint }) {
+  return (
+    <article className="insight-card">
+      <span>{title}</span>
+      <strong>{value}</strong>
+      <small>{hint}</small>
+    </article>
+  );
+}
+
+function InsightBarChart({ title, rows, selected, onSelect, empty }) {
+  const max = Math.max(...rows.map((row) => row.total), 1);
+  return (
+    <div className="chart-card">
+      <div className="chart-title">
+        <h3>{title}</h3>
+        <span>Total facturado</span>
+      </div>
+      <div className="chart-bars">
+        {rows.map((row) => (
+          <button className={selected === row.id ? 'active' : ''} key={row.id} onClick={() => onSelect(selected === row.id ? '' : row.id)}>
+            <span>{row.label}</span>
+            <div><i style={{ width: `${Math.max(8, (row.total / max) * 100)}%` }} /></div>
+            <b>{money(row.total)}</b>
+            {selected === row.id && <em>{row.count} venta(s), utilidad estimada {money(row.profit)}</em>}
+          </button>
+        ))}
+        {!rows.length && <p className="empty-state">{empty}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ProfitChart({ title, rows, selected, onSelect }) {
+  const sorted = [...rows].sort((a, b) => b.profit - a.profit).slice(0, 6);
+  const max = Math.max(...sorted.map((row) => Math.abs(row.profit)), 1);
+  return (
+    <div className="chart-card">
+      <div className="chart-title">
+        <h3>{title}</h3>
+        <span>Precio - costo del producto</span>
+      </div>
+      <div className="profit-bars">
+        {sorted.map((row) => (
+          <button className={selected === `profit-${row.id}` ? 'active' : ''} key={row.id} onClick={() => onSelect(selected === `profit-${row.id}` ? '' : `profit-${row.id}`)}>
+            <span>{row.label}</span>
+            <div><i style={{ height: `${Math.max(12, (Math.abs(row.profit) / max) * 100)}%` }} /></div>
+            <b>{money(row.profit)}</b>
+          </button>
+        ))}
+        {!sorted.length && <p className="empty-state">Cuando existan ventas se calculará la rentabilidad estimada.</p>}
+      </div>
+    </div>
   );
 }
 
