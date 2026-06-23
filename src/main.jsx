@@ -1211,7 +1211,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
         />
         <div className="store-hero-copy">
           <BrandLogo variant="inverse" size="store" />
-          <p className="eyebrow">Tienda publicitaria + taller de producción</p>
+          <p className="eyebrow hero-title-blue">Dreams Agencia de Publicidad</p>
           <h2>Todo para que tu marca se vea, venda y crezca.</h2>
           <p>
             Corte láser CO2, grabado, letreros, textiles, material impreso, marketing digital y asesoría web desde Tulcán para negocios que necesitan presencia real.
@@ -1228,30 +1228,6 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
               {publicMode ? 'Acceso contable' : 'Editar productos'}
             </button>
           </div>
-          <div className="hero-proof">
-            <span><strong>2012</strong> trayectoria</span>
-            <span><strong>360°</strong> físico + digital</span>
-            <span><strong>Tulcán</strong> norte del Ecuador</span>
-          </div>
-        </div>
-        <div className="store-showcase" aria-label="Vista conceptual de producción Dreams">
-          <div className="showcase-browser">
-            <div>
-              <i />
-              <i />
-              <i />
-            </div>
-            <strong>Catálogo Dreams</strong>
-            <span>Cotización · Producción · Factura</span>
-          </div>
-          <div className="laser-card">
-            <span />
-            <strong>Corte CO2</strong>
-            <small>Acrílico · MDF · Grabado</small>
-          </div>
-          <div className="floating-ticket one">DTF</div>
-          <div className="floating-ticket two">Letreros 3D</div>
-          <div className="floating-ticket three">Sublimación</div>
         </div>
       </section>
 

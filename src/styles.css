@@ -1149,20 +1149,21 @@ button.sri-link {
 
 .storefront {
   display: grid;
-  gap: 22px;
+  gap: 0;
+  scroll-snap-type: y proximity;
 }
 
 .public-store-page {
   min-height: 100vh;
-  padding: 20px;
+  padding: 0;
   background:
     radial-gradient(circle at top right, rgba(0, 118, 255, 0.18), transparent 30rem),
     linear-gradient(180deg, #001e60 0 220px, var(--bg) 220px 100%);
 }
 
 .public-store-nav {
-  max-width: 1440px;
-  margin: 0 auto 16px;
+  width: min(1440px, calc(100% - 40px));
+  margin: 20px auto 0;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   padding: 12px 16px;
@@ -1211,17 +1212,15 @@ button.sri-link {
 }
 
 .public-store-page .storefront {
-  max-width: 1440px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
 }
 
 .store-hero {
-  min-height: min(760px, calc(100vh - 128px));
-  border-radius: 8px;
-  padding: clamp(28px, 5vw, 72px);
-  display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
-  gap: 36px;
+  min-height: 100vh;
+  border-radius: 0;
+  padding: clamp(96px, 12vw, 160px) clamp(24px, 7vw, 112px) clamp(56px, 8vw, 96px);
+  display: flex;
   align-items: center;
   color: white;
   background:
@@ -1238,10 +1237,7 @@ button.sri-link {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(0, 20, 78, 0.94) 0%, rgba(0, 43, 135, 0.78) 44%, rgba(0, 80, 195, 0.4) 100%),
-    linear-gradient(120deg, transparent 0 38%, rgba(255, 255, 255, 0.14) 45%, transparent 54%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 74px);
-  animation: storeSweep 8s ease-in-out infinite;
+    linear-gradient(90deg, rgba(0, 20, 78, 0.9) 0%, rgba(0, 43, 135, 0.72) 46%, rgba(0, 80, 195, 0.34) 100%);
   pointer-events: none;
   z-index: 1;
 }
@@ -1275,6 +1271,17 @@ button.sri-link {
 .store-hero-copy {
   display: grid;
   gap: 16px;
+  width: min(860px, 100%);
+  animation: heroEnter 0.7s var(--spring) both;
+}
+
+.hero-title-blue {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: white;
+  background: rgba(0, 80, 195, 0.72);
+  backdrop-filter: blur(10px);
 }
 
 .store-hero h2 {
@@ -1286,7 +1293,7 @@ button.sri-link {
 }
 
 .store-hero p:not(.eyebrow) {
-  max-width: 620px;
+  max-width: 680px;
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
   font-size: 18px;
@@ -1300,153 +1307,17 @@ button.sri-link {
   margin-top: 6px;
 }
 
-.hero-proof {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.hero-proof span {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
-  padding: 9px 12px;
-  color: rgba(255, 255, 255, 0.74);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  font-size: 13px;
-  font-weight: 850;
-}
-
-.hero-proof strong {
-  color: white;
-}
-
-.store-showcase {
-  min-height: 420px;
-  display: grid;
-  place-items: center;
-  position: relative;
-  perspective: 1100px;
-}
-
-.showcase-browser {
-  position: absolute;
-  top: 2%;
-  right: 6%;
-  width: min(360px, 84%);
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  border-radius: 8px;
-  padding: 14px;
-  display: grid;
-  gap: 10px;
-  color: white;
-  background: rgba(255, 255, 255, 0.13);
-  box-shadow: 0 26px 60px rgba(0, 20, 75, 0.28);
-  backdrop-filter: blur(14px);
-  transform: rotateY(-10deg) rotateX(4deg);
-  animation: browserFloat 6.6s ease-in-out infinite;
-}
-
-.showcase-browser div {
-  display: flex;
-  gap: 6px;
-}
-
-.showcase-browser i {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.showcase-browser strong {
-  font-size: 20px;
-}
-
-.showcase-browser span {
-  color: rgba(255, 255, 255, 0.72);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.laser-card {
-  width: min(420px, 100%);
-  aspect-ratio: 1.16;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 8px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  background:
-    linear-gradient(160deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.06)),
-    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 9rem);
-  box-shadow: 0 34px 80px rgba(0, 20, 75, 0.32);
-  backdrop-filter: blur(12px);
-  transform: rotate(-2deg) rotateY(-8deg);
-  animation: showcaseFloat 6s ease-in-out infinite;
-}
-
-.laser-card span {
-  position: absolute;
-  inset: 18% 12% auto;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, white, var(--accent), transparent);
-  box-shadow: 0 0 24px rgba(255, 255, 255, 0.72);
-  animation: laserLine 2.7s ease-in-out infinite;
-}
-
-.laser-card strong {
-  font-size: 34px;
-}
-
-.laser-card small {
-  color: rgba(255, 255, 255, 0.72);
-  font-weight: 800;
-}
-
-.floating-ticket {
-  position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  border-radius: 999px;
-  padding: 10px 14px;
-  color: white;
-  background: rgba(255, 255, 255, 0.14);
-  box-shadow: 0 18px 40px rgba(0, 20, 75, 0.2);
-  backdrop-filter: blur(10px);
-  font-weight: 900;
-  animation: floatTicket 5.4s ease-in-out infinite;
-}
-
-.floating-ticket.one {
-  top: 18%;
-  left: 3%;
-}
-
-.floating-ticket.two {
-  right: 4%;
-  top: 24%;
-  animation-delay: 0.35s;
-}
-
-.floating-ticket.three {
-  bottom: 12%;
-  left: 15%;
-  animation-delay: 0.7s;
-}
-
 .brand-strip {
-  border: 1px solid var(--blue-line);
-  border-radius: 999px;
-  padding: 12px;
+  border: 0;
+  border-radius: 0;
+  padding: 18px clamp(20px, 6vw, 96px);
   display: flex;
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
   background: white;
-  box-shadow: var(--shadow);
+  box-shadow: 0 18px 42px rgba(0, 80, 195, 0.08);
+  scroll-snap-align: start;
 }
 
 .brand-strip span {
@@ -1458,12 +1329,14 @@ button.sri-link {
 }
 
 .store-section {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 24px;
+  border: 0;
+  border-radius: 0;
+  min-height: 100vh;
+  padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 96px);
   background: white;
-  box-shadow: var(--shadow);
+  box-shadow: none;
   animation: panelIn 0.45s var(--spring) both;
+  scroll-snap-align: start;
 }
 
 .store-section-head {
@@ -1597,8 +1470,9 @@ button.sri-link {
 }
 
 .ecosystem-section {
-  border-radius: 8px;
-  padding: clamp(24px, 4vw, 48px);
+  border-radius: 0;
+  min-height: 100vh;
+  padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 96px);
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
   gap: 24px;
@@ -1606,7 +1480,8 @@ button.sri-link {
   background:
     radial-gradient(circle at top right, rgba(0, 118, 255, 0.12), transparent 20rem),
     white;
-  box-shadow: var(--shadow);
+  box-shadow: none;
+  scroll-snap-align: start;
 }
 
 .ecosystem-copy h2 {
@@ -1657,8 +1532,9 @@ button.sri-link {
 }
 
 .story-section {
-  border-radius: 8px;
-  padding: clamp(24px, 4vw, 48px);
+  border-radius: 0;
+  min-height: 100vh;
+  padding: clamp(56px, 8vw, 104px) clamp(20px, 6vw, 96px);
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
   gap: 26px;
@@ -1666,9 +1542,10 @@ button.sri-link {
   background:
     radial-gradient(circle at 10% 20%, rgba(0, 164, 255, 0.32), transparent 18rem),
     linear-gradient(135deg, #001746, #003a9c 54%, #0050c3);
-  box-shadow: 0 28px 70px rgba(0, 80, 195, 0.18);
+  box-shadow: none;
   overflow: hidden;
   position: relative;
+  scroll-snap-align: start;
 }
 
 .story-section::after {
@@ -2393,11 +2270,7 @@ button.sri-link {
   }
 
   .store-hero {
-    min-height: auto;
-  }
-
-  .store-showcase {
-    min-height: 340px;
+    min-height: 100vh;
   }
 
   .topbar > .user-chip:first-of-type {
@@ -2506,8 +2379,8 @@ button.sri-link {
   }
 
   .store-hero {
-    padding: 24px;
-    min-height: 720px;
+    padding: 112px 20px 48px;
+    min-height: 100svh;
   }
 
   .store-hero h2 {
@@ -2529,32 +2402,6 @@ button.sri-link {
 
   .ecosystem-flow {
     grid-template-columns: 1fr;
-  }
-
-  .floating-ticket {
-    position: static;
-    justify-self: start;
-    margin: 6px;
-  }
-
-  .store-showcase {
-    min-height: auto;
-    align-items: stretch;
-    justify-items: stretch;
-  }
-
-  .laser-card {
-    width: 100%;
-    min-height: 220px;
-  }
-
-  .showcase-browser {
-    position: relative;
-    top: auto;
-    right: auto;
-    width: 100%;
-    margin-bottom: 12px;
-    transform: none;
   }
 
   .mini-calendar {
@@ -2691,60 +2538,6 @@ button.sri-link {
   50% {
     transform: scale(1.35);
     opacity: 1;
-  }
-}
-
-@keyframes storeSweep {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: translateX(-3%);
-  }
-  50% {
-    opacity: 1;
-    transform: translateX(3%);
-  }
-}
-
-@keyframes showcaseFloat {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-2deg);
-  }
-  50% {
-    transform: translateY(-12px) rotate(1deg);
-  }
-}
-
-@keyframes browserFloat {
-  0%,
-  100% {
-    transform: translateY(0) rotateY(-10deg) rotateX(4deg);
-  }
-  50% {
-    transform: translateY(-14px) rotateY(-4deg) rotateX(2deg);
-  }
-}
-
-@keyframes laserLine {
-  0%,
-  100% {
-    transform: translateY(0) scaleX(0.72);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(118px) scaleX(1);
-    opacity: 1;
-  }
-}
-
-@keyframes floatTicket {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
   }
 }
 
