@@ -72,6 +72,7 @@ const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
 const APP_BASE = import.meta.env.BASE_URL || './';
+const HERO_VIDEO_URL = assetPath('videos/dreams-hero-laser.mp4');
 
 function assetPath(path) {
   return `${APP_BASE}${path.replace(/^\//, '')}`;
@@ -1195,12 +1196,22 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
   return (
     <main className="storefront">
       <section className="store-hero">
+        <video
+          className="store-hero-video"
+          src={HERO_VIDEO_URL}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
         <div className="store-hero-copy">
           <BrandLogo variant="inverse" size="store" />
-          <p className="eyebrow">Tienda publicitaria</p>
-          <h2>Productos personalizados, producción láser y piezas de marca para negocios.</h2>
+          <p className="eyebrow">Tienda publicitaria + producción real</p>
+          <h2>Publicidad física, láser CO2 y productos de marca que sí se ven.</h2>
           <p>
-            Un escaparate rápido para mostrar lo que Dreams vende, preparar cotizaciones y conectar cada pedido con la contabilidad.
+            Dreams convierte ideas en piezas listas para vender: corte, grabado, letreros, textiles, material impreso, campañas digitales y asesoría web.
           </p>
           <div className="store-actions">
             {publicMode ? (
@@ -1216,6 +1227,15 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
           </div>
         </div>
         <div className="store-showcase" aria-label="Vista conceptual de producción Dreams">
+          <div className="showcase-browser">
+            <div>
+              <i />
+              <i />
+              <i />
+            </div>
+            <strong>Catálogo Dreams</strong>
+            <span>Cotización · Producción · Factura</span>
+          </div>
           <div className="laser-card">
             <span />
             <strong>Corte CO2</strong>

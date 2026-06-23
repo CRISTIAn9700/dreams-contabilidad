@@ -5,8 +5,8 @@
   "start_url": "/dreams-contabilidad/",
   "scope": "/dreams-contabilidad/",
   "display": "standalone",
-  "background_color": "#071933",
-  "theme_color": "#f97316",
+  "background_color": "#001e60",
+  "theme_color": "#0050c3",
   "orientation": "portrait-primary",
   "icons": [
     {
