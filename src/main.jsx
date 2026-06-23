@@ -61,10 +61,18 @@ const SRI_FACTURADOR_URL = import.meta.env.VITE_SRI_FACTURADOR_URL || 'https://f
 const SRI_FACTURACION_INFO_URL = 'https://www.sri.gob.ec/facturacion-electronica';
 const cloudConfigured = cloudReady;
 const allowPublicSignup = !cloudConfigured || import.meta.env.VITE_ALLOW_PUBLIC_SIGNUP === 'true';
+const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 const APP_BASE = import.meta.env.BASE_URL || './';
 
 function assetPath(path) {
   return `${APP_BASE}${path.replace(/^\//, '')}`;
+}
+
+function isAllowedEmail(email) {
+  return !allowedEmails.length || allowedEmails.includes(String(email || '').trim().toLowerCase());
 }
 
 const seedData = {
@@ -440,6 +448,13 @@ function App() {
           setSyncStatus('Modo nube listo');
           return;
         }
+        if (!isAllowedEmail(current.user.email)) {
+          await signOutCloud();
+          localStorage.removeItem('dreams-contabilidad-session');
+          setSession(null);
+          setSyncStatus('Correo no autorizado');
+          return;
+        }
         const cloudState = await loadCloudState(current.user.id);
         const nextSession = {
           id: current.user.id,
@@ -480,6 +495,10 @@ function App() {
   async function login(email, password) {
     if (cloudConfigured) {
       const user = await signInCloud(email, password);
+      if (!isAllowedEmail(user.email)) {
+        await signOutCloud();
+        throw new Error('Este correo no está autorizado para Dreams Contabilidad.');
+      }
       const cloudState = await loadCloudState(user.id);
       const nextSession = {
         id: user.id,
@@ -509,6 +528,9 @@ function App() {
   async function registerUser(nextUser) {
     if (!allowPublicSignup) {
       return { ok: false, message: 'El registro público está cerrado. Crea o invita usuarios desde Supabase para mantener el acceso privado.' };
+    }
+    if (!isAllowedEmail(nextUser.email)) {
+      return { ok: false, message: 'Este correo no está autorizado para Dreams Contabilidad.' };
     }
     if (cloudConfigured) {
       const data = await signUpCloud(nextUser);
@@ -1768,6 +1790,7 @@ function SettingsView({ state, updateState }) {
             <div><EyeOff size={18} /><span>La página pide a buscadores que no la indexen ni la muestren en resultados.</span></div>
             <div><LockKeyhole size={18} /><span>Los datos contables se guardan por usuario en Supabase con acceso autenticado.</span></div>
             <div><KeyRound size={18} /><span>La recuperación de contraseña se hace por correo y enlace seguro.</span></div>
+            <div><ShieldCheck size={18} /><span>{allowedEmails.length ? `Lista privada activa para ${allowedEmails.length} correo(s) autorizado(s).` : 'Lista privada preparada; falta definir los correos autorizados en la configuración.'}</span></div>
           </div>
           <p className="security-note">Importante: GitHub Pages muestra la aplicación públicamente, pero no los datos. Para máxima privacidad futura conviene moverla a un hosting con acceso restringido o dominio privado.</p>
         </section>
