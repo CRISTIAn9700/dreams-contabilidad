@@ -39,6 +39,24 @@ export async function signUpCloud({ name, email, password }) {
   return data;
 }
 
+export async function resetPasswordCloud(email) {
+  if (!supabase) return;
+  const redirectTo = `${window.location.origin}${window.location.pathname}`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw error;
+}
+
+export async function updateCloudPassword(password) {
+  if (!supabase) return;
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw error;
+}
+
+export function onCloudAuthStateChange(callback) {
+  if (!supabase) return { data: { subscription: { unsubscribe() {} } } };
+  return supabase.auth.onAuthStateChange(callback);
+}
+
 export async function signOutCloud() {
   if (!supabase) return;
   const { error } = await supabase.auth.signOut();

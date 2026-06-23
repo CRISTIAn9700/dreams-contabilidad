@@ -10,8 +10,13 @@ import {
   ClipboardList,
   Cloud,
   Database,
+  Download,
   ExternalLink,
+  EyeOff,
+  FileSpreadsheet,
   FilePlus2,
+  History,
+  KeyRound,
   LayoutDashboard,
   LockKeyhole,
   LogOut,
@@ -21,6 +26,7 @@ import {
   ReceiptText,
   Search,
   Settings,
+  ShieldCheck,
   Sparkles,
   Trash2,
   UsersRound,
@@ -31,10 +37,13 @@ import {
   cloudReady,
   getCloudSession,
   loadCloudState,
+  onCloudAuthStateChange,
+  resetPasswordCloud,
   saveCloudState,
   signInCloud,
   signOutCloud,
   signUpCloud,
+  updateCloudPassword,
 } from './cloud';
 
 const IVA_RATE = 0.15;
@@ -50,6 +59,7 @@ const currentMonth = today.slice(0, 7);
 const SRI_FACTURADOR_URL = import.meta.env.VITE_SRI_FACTURADOR_URL || 'https://facturadorsri.sri.gob.ec/portal-facturadorsri-internet/pages/inicio.html';
 const SRI_FACTURACION_INFO_URL = 'https://www.sri.gob.ec/facturacion-electronica';
 const cloudConfigured = cloudReady;
+const allowPublicSignup = !cloudConfigured || import.meta.env.VITE_ALLOW_PUBLIC_SIGNUP === 'true';
 
 const seedData = {
   users: [
@@ -293,12 +303,78 @@ function calendarDaysForMonth(month = currentMonth) {
   });
 }
 
+function labelForMonth(monthKey) {
+  if (!monthKey) return 'Todos los meses';
+  const [year, monthIndex] = monthKey.split('-').map(Number);
+  return formatLocalDate(new Date(year, monthIndex - 1, 1), {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function labelForDay(dayKey) {
+  if (!dayKey) return 'Todos los días';
+  const [year, monthIndex, day] = dayKey.split('-').map(Number);
+  return formatLocalDate(new Date(year, monthIndex - 1, day), {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function downloadExcelHtml(filename, sheets) {
+  const style = `
+    <style>
+      body { font-family: Arial, sans-serif; }
+      h1 { color: #071933; }
+      h2 { color: #f97316; margin-top: 28px; }
+      table { border-collapse: collapse; width: 100%; margin-bottom: 24px; }
+      th { background: #071933; color: #fff; }
+      th, td { border: 1px solid #dce3ee; padding: 8px; text-align: left; }
+      .number { mso-number-format:"0.00"; text-align: right; }
+    </style>`;
+  const content = sheets.map((sheet) => {
+    const rows = sheet.rows.map((row) => (
+      `<tr>${row.map((cell, index) => `<td${index >= sheet.textColumns ? ' class="number"' : ''}>${escapeHtml(cell)}</td>`).join('')}</tr>`
+    )).join('');
+    return `<h2>${escapeHtml(sheet.title)}</h2><table><thead><tr>${sheet.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+  }).join('');
+  const html = `<!doctype html><html><head><meta charset="UTF-8">${style}</head><body><h1>Dreams Contabilidad</h1>${content}</body></html>`;
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function App() {
   const [state, setState] = useState(loadState);
   const [session, setSession] = useState(() => JSON.parse(localStorage.getItem('dreams-contabilidad-session') || 'null'));
   const [view, setView] = useState('panel');
   const [syncStatus, setSyncStatus] = useState(cloudConfigured ? 'Conectando nube' : 'Modo local');
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const localClock = useLocalClock();
+
+  useEffect(() => {
+    if (!cloudConfigured) return undefined;
+    const { data } = onCloudAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setPasswordRecovery(true);
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -377,6 +453,9 @@ function App() {
   }
 
   async function registerUser(nextUser) {
+    if (!allowPublicSignup) {
+      return { ok: false, message: 'El registro público está cerrado. Crea o invita usuarios desde Supabase para mantener el acceso privado.' };
+    }
     if (cloudConfigured) {
       const data = await signUpCloud(nextUser);
       const user = data.user;
@@ -413,6 +492,20 @@ function App() {
     return { ok: true };
   }
 
+  async function recoverPassword(email) {
+    if (!cloudConfigured) {
+      return { ok: false, message: 'La recuperación por correo se activa cuando la app está conectada a Supabase.' };
+    }
+    await resetPasswordCloud(email);
+    return { ok: true, message: 'Te enviamos un correo con el enlace para crear una nueva contraseña.' };
+  }
+
+  async function changeRecoveredPassword(password) {
+    await updateCloudPassword(password);
+    setPasswordRecovery(false);
+    setSyncStatus('Contraseña actualizada');
+  }
+
   async function logout() {
     if (cloudConfigured) {
       await signOutCloud();
@@ -422,8 +515,12 @@ function App() {
     setSession(null);
   }
 
+  if (passwordRecovery) {
+    return <PasswordResetScreen onSave={changeRecoveredPassword} />;
+  }
+
   if (!session) {
-    return <LoginScreen onLogin={login} onRegister={registerUser} />;
+    return <LoginScreen onLogin={login} onRegister={registerUser} onRecover={recoverPassword} allowSignup={allowPublicSignup} />;
   }
 
   return (
@@ -433,27 +530,40 @@ function App() {
       {view === 'gastos' && <Expenses state={state} updateState={updateState} />}
       {view === 'productos' && <Products state={state} updateState={updateState} />}
       {view === 'clientes' && <Clients state={state} updateState={updateState} />}
+      {view === 'historico' && <HistoryView state={state} />}
       {view === 'reportes' && <Reports state={state} />}
       {view === 'ajustes' && <SettingsView state={state} updateState={updateState} />}
     </Shell>
   );
 }
 
-function LoginScreen({ onLogin, onRegister }) {
+function LoginScreen({ onLogin, onRegister, onRecover, allowSignup }) {
   const [mode, setMode] = useState('login');
   const [name, setName] = useState('Nuevo usuario Dreams');
-  const [email, setEmail] = useState('admin@dreams.ec');
-  const [password, setPassword] = useState('Dreams2026!');
+  const [email, setEmail] = useState(cloudConfigured ? '' : 'admin@dreams.ec');
+  const [password, setPassword] = useState(cloudConfigured ? '' : 'Dreams2026!');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function submit(event) {
     event.preventDefault();
     setError('');
+    setNotice('');
     setLoading(true);
     try {
       if (mode === 'login') {
         if (!(await onLogin(email.trim(), password))) setError('Usuario o contraseña incorrectos.');
+        return;
+      }
+      if (mode === 'recover') {
+        if (!email.trim()) {
+          setError('Escribe el correo de tu cuenta.');
+          return;
+        }
+        const result = await onRecover(email.trim());
+        if (result.ok) setNotice(result.message);
+        else setError(result.message);
         return;
       }
       if (!name.trim() || !email.trim() || password.length < 6) {
@@ -487,12 +597,18 @@ function LoginScreen({ onLogin, onRegister }) {
       <form className="login-card" onSubmit={submit}>
         <div>
           <LockKeyhole size={24} />
-          <h2>{mode === 'login' ? 'Ingresar' : 'Crear usuario'}</h2>
-          <p>{mode === 'login' ? 'Usuario inicial incluido para probar el sistema.' : 'Crea un acceso local para otro miembro del equipo.'}</p>
+          <h2>{mode === 'recover' ? 'Recuperar contraseña' : mode === 'login' ? 'Ingresar' : 'Crear usuario'}</h2>
+          <p>
+            {mode === 'recover'
+              ? 'Te enviaremos un enlace seguro al correo registrado.'
+              : mode === 'login'
+                ? cloudConfigured ? 'Accede con tu correo autorizado de Dreams.' : 'Usuario inicial incluido para probar el sistema.'
+                : 'Crea un acceso local para otro miembro del equipo.'}
+          </p>
         </div>
-        <div className="segmented">
+        <div className={`segmented ${allowSignup ? '' : 'single'}`}>
           <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => setMode('login')}>Ingresar</button>
-          <button type="button" className={mode === 'register' ? 'active' : ''} onClick={() => setMode('register')}>Crear usuario</button>
+          {allowSignup && <button type="button" className={mode === 'register' ? 'active' : ''} onClick={() => setMode('register')}>Crear usuario</button>}
         </div>
         {mode === 'register' && (
           <label>
@@ -504,17 +620,90 @@ function LoginScreen({ onLogin, onRegister }) {
           Correo
           <input value={email} onChange={(event) => setEmail(event.target.value)} type="email" />
         </label>
+        {mode !== 'recover' && (
+          <label>
+            Contraseña
+            <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" />
+          </label>
+        )}
+        {error && <p className="form-error">{error}</p>}
+        {notice && <p className="form-notice">{notice}</p>}
+        <button className="primary-button" type="submit" disabled={loading}>
+          {loading ? 'Procesando' : mode === 'recover' ? 'Enviar enlace' : mode === 'login' ? 'Entrar al panel' : 'Crear y entrar'}
+        </button>
+        {mode === 'login' && (
+          <button className="link-button" type="button" onClick={() => setMode('recover')}>
+            ¿Olvidaste tu contraseña?
+          </button>
+        )}
+        {mode === 'recover' && (
+          <button className="link-button" type="button" onClick={() => setMode('login')}>
+            Volver al ingreso
+          </button>
+        )}
+        <p className="demo-note">
+          {cloudConfigured
+            ? allowSignup ? 'Nube activa con Supabase Auth.' : 'Registro público cerrado para proteger la información financiera.'
+            : mode === 'login' ? 'Demo: admin@dreams.ec / Dreams2026!' : 'Este usuario se guarda localmente en este navegador.'}
+        </p>
+      </form>
+    </main>
+  );
+}
+
+function PasswordResetScreen({ onSave }) {
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function submit(event) {
+    event.preventDefault();
+    setError('');
+    if (password.length < 8) {
+      setError('Usa una contraseña de al menos 8 caracteres.');
+      return;
+    }
+    if (password !== confirm) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await onSave(password);
+    } catch (saveError) {
+      setError(saveError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="login-page password-page">
+      <section className="login-hero">
+        <BrandLogo variant="inverse" size="hero" />
+        <p className="eyebrow">Seguridad Dreams</p>
+        <h1>Nueva contraseña</h1>
+        <p>Completa este paso para recuperar tu acceso a Dreams Contabilidad.</p>
+      </section>
+      <form className="login-card" onSubmit={submit}>
+        <div>
+          <KeyRound size={24} />
+          <h2>Actualizar acceso</h2>
+          <p>El enlace de recuperación fue validado por Supabase.</p>
+        </div>
         <label>
-          Contraseña
+          Nueva contraseña
           <input value={password} onChange={(event) => setPassword(event.target.value)} type="password" />
+        </label>
+        <label>
+          Confirmar contraseña
+          <input value={confirm} onChange={(event) => setConfirm(event.target.value)} type="password" />
         </label>
         {error && <p className="form-error">{error}</p>}
         <button className="primary-button" type="submit" disabled={loading}>
-          {loading ? 'Procesando' : mode === 'login' ? 'Entrar al panel' : 'Crear y entrar'}
+          {loading ? 'Guardando' : 'Guardar nueva contraseña'}
         </button>
-        <p className="demo-note">
-          {mode === 'login' ? 'Demo: admin@dreams.ec / Dreams2026!' : 'Este usuario se guarda localmente; en nube se usará Supabase Auth.'}
-        </p>
       </form>
     </main>
   );
@@ -527,6 +716,7 @@ function Shell({ children, session, view, setView, logout, syncStatus, localCloc
     ['gastos', 'Gastos', CircleDollarSign],
     ['productos', 'Productos', Boxes],
     ['clientes', 'Clientes', UsersRound],
+    ['historico', 'Histórico', History],
     ['reportes', 'Reportes', BarChart3],
     ['ajustes', 'Ajustes', Settings],
   ];
@@ -584,6 +774,7 @@ function pageTitle(view) {
     gastos: 'Registro de gastos',
     productos: 'Productos y servicios',
     clientes: 'Clientes',
+    historico: 'Histórico de ventas',
     reportes: 'Reportes Ecuador',
     ajustes: 'Configuración',
   }[view];
@@ -1062,6 +1253,194 @@ function Clients({ state, updateState }) {
   );
 }
 
+function HistoryView({ state }) {
+  const availableYears = [...new Set(state.sales.map((sale) => sale.date?.slice(0, 4)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+  const [year, setYear] = useState(availableYears[0] || today.slice(0, 4));
+  const [month, setMonth] = useState('');
+  const [day, setDay] = useState('');
+  const months = Array.from({ length: 12 }, (_, index) => `${year}-${String(index + 1).padStart(2, '0')}`);
+  const days = month ? calendarDaysForMonth(month).filter(Boolean) : [];
+  const rows = state.sales
+    .filter((sale) => !year || sale.date?.startsWith(year))
+    .filter((sale) => !month || sale.date?.startsWith(month))
+    .filter((sale) => !day || sale.date === day)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const totals = computeTotals({ ...state, sales: rows, expenses: [] });
+  const grouped = rows.reduce((acc, sale) => {
+    const monthKey = sale.date.slice(0, 7);
+    const dayKey = sale.date;
+    acc[monthKey] ||= {};
+    acc[monthKey][dayKey] ||= [];
+    acc[monthKey][dayKey].push(sale);
+    return acc;
+  }, {});
+
+  function saleDetail(sale) {
+    return {
+      client: state.clients.find((client) => client.id === sale.clientId),
+      product: state.products.find((product) => product.id === sale.productId),
+    };
+  }
+
+  function exportAccountantReport() {
+    const byMonth = Object.entries(grouped).map(([monthKey, daysByMonth]) => {
+      const monthRows = Object.values(daysByMonth).flat();
+      const monthTotals = computeTotals({ ...state, sales: monthRows, expenses: [] });
+      return [labelForMonth(monthKey), monthRows.length, monthTotals.salesSubtotal, monthTotals.salesIva, monthTotals.salesTotal];
+    });
+    const byDay = Object.entries(grouped).flatMap(([, daysByMonth]) => (
+      Object.entries(daysByMonth).map(([dayKey, dayRows]) => {
+        const dayTotals = computeTotals({ ...state, sales: dayRows, expenses: [] });
+        return [labelForDay(dayKey), dayRows.length, dayTotals.salesSubtotal, dayTotals.salesIva, dayTotals.salesTotal];
+      })
+    ));
+    const detailRows = rows.map((sale) => {
+      const { client, product } = saleDetail(sale);
+      return [
+        sale.date,
+        client?.name || '',
+        client?.ruc || '',
+        product?.name || '',
+        sale.quantity,
+        sale.status,
+        sale.subtotal,
+        sale.iva,
+        sale.total,
+        sale.note || '',
+      ];
+    });
+    downloadExcelHtml(`dreams-ventas-${year || 'todo'}${month ? `-${month.slice(5)}` : ''}${day ? `-${day.slice(-2)}` : ''}.xls`, [
+      {
+        title: 'Resumen para contador',
+        headers: ['Periodo', 'Ventas', 'Subtotal', 'IVA', 'Total'],
+        rows: [[day ? labelForDay(day) : month ? labelForMonth(month) : year, rows.length, totals.salesSubtotal, totals.salesIva, totals.salesTotal]],
+        textColumns: 2,
+      },
+      {
+        title: 'Resumen por mes',
+        headers: ['Mes', 'Ventas', 'Subtotal', 'IVA', 'Total'],
+        rows: byMonth,
+        textColumns: 2,
+      },
+      {
+        title: 'Resumen por dia',
+        headers: ['Dia', 'Ventas', 'Subtotal', 'IVA', 'Total'],
+        rows: byDay,
+        textColumns: 2,
+      },
+      {
+        title: 'Detalle de ventas',
+        headers: ['Fecha', 'Cliente', 'RUC/Cedula', 'Producto', 'Cantidad', 'Estado', 'Subtotal', 'IVA', 'Total', 'Nota'],
+        rows: detailRows,
+        textColumns: 6,
+      },
+    ]);
+  }
+
+  return (
+    <main className="content-grid">
+      <section className="hero-panel history-hero">
+        <div>
+          <p className="eyebrow">Año fiscal y operación</p>
+          <h2>Ventas ordenadas por año, mes y día</h2>
+          <p>Filtra periodos, revisa totales con IVA y descarga un archivo compatible con Excel para entregar al contador.</p>
+        </div>
+        <button className="primary-button" onClick={exportAccountantReport} disabled={!rows.length}>
+          <Download size={18} /> Descargar reporte Excel
+        </button>
+      </section>
+      <section className="metrics-grid">
+        <Metric title="Ventas filtradas" value={rows.length} hint="Registros encontrados" tone="brand" />
+        <Metric title="Subtotal" value={money(totals.salesSubtotal)} hint="Base imponible" />
+        <Metric title="IVA cobrado" value={money(totals.salesIva)} hint={`IVA ${Math.round(state.business.ivaRate * 100)}%`} tone="warn" />
+        <Metric title="Total facturado" value={money(totals.salesTotal)} hint="Incluye IVA" tone="good" />
+      </section>
+      <section className="panel wide">
+        <div className="section-title">
+          <div>
+            <p className="eyebrow">Filtros</p>
+            <h2>Periodo contable</h2>
+          </div>
+          <FileSpreadsheet size={20} />
+        </div>
+        <div className="filters-grid">
+          <Field label="Año">
+            <select value={year} onChange={(event) => { setYear(event.target.value); setMonth(''); setDay(''); }}>
+              {availableYears.length ? availableYears.map((item) => <option key={item}>{item}</option>) : <option>{today.slice(0, 4)}</option>}
+            </select>
+          </Field>
+          <Field label="Mes">
+            <select value={month} onChange={(event) => { setMonth(event.target.value); setDay(''); }}>
+              <option value="">Todos los meses</option>
+              {months.map((item) => <option value={item} key={item}>{labelForMonth(item)}</option>)}
+            </select>
+          </Field>
+          <Field label="Día">
+            <select value={day} onChange={(event) => setDay(event.target.value)} disabled={!month}>
+              <option value="">Todos los días</option>
+              {days.map((item) => <option value={item} key={item}>{labelForDay(item)}</option>)}
+            </select>
+          </Field>
+        </div>
+      </section>
+      <section className="panel wide">
+        <div className="section-title">
+          <div>
+            <p className="eyebrow">Detalle histórico</p>
+            <h2>{rows.length ? `${rows.length} registros` : 'Sin ventas en este periodo'}</h2>
+          </div>
+          <History size={20} />
+        </div>
+        <div className="history-tree">
+          {Object.entries(grouped).map(([monthKey, daysByMonth]) => (
+            <div className="history-group" key={monthKey}>
+              <h3>{labelForMonth(monthKey)}</h3>
+              {Object.entries(daysByMonth).map(([dayKey, dayRows]) => {
+                const dayTotals = computeTotals({ ...state, sales: dayRows, expenses: [] });
+                return (
+                  <div className="history-day" key={dayKey}>
+                    <div className="history-day-title">
+                      <strong>{labelForDay(dayKey)}</strong>
+                      <span>{money(dayTotals.salesTotal)}</span>
+                    </div>
+                    {dayRows.map((sale) => {
+                      const { client, product } = saleDetail(sale);
+                      return (
+                        <div className="history-sale" key={sale.id}>
+                          <div>
+                            <strong>{client?.name}</strong>
+                            <span>{product?.name} · {sale.quantity} unidad(es)</span>
+                          </div>
+                          <b>{money(sale.total)}</b>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+          {!rows.length && <p className="empty-state">Cuando registres ventas de este periodo aparecerán aquí automáticamente.</p>}
+        </div>
+      </section>
+      <section className="panel">
+        <div className="section-title">
+          <div>
+            <p className="eyebrow">Continuidad</p>
+            <h2>Año tras año</h2>
+          </div>
+          <CalendarDays size={20} />
+        </div>
+        <div className="tax-notes">
+          <p><strong>Guardado:</strong> cada venta queda con su fecha exacta y no se cierra al cambiar de mes o año.</p>
+          <p><strong>Escalable:</strong> puedes seguir registrando junio, julio, diciembre y el siguiente año sin perder el historial.</p>
+          <p><strong>Exportación:</strong> descarga el periodo filtrado para revisión contable y respaldo externo.</p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 function Reports({ state }) {
   const totals = computeTotals(state);
   const pendingSales = state.sales.filter((sale) => sale.status === 'Pendiente').reduce((sum, sale) => sum + sale.total, 0);
@@ -1144,12 +1523,27 @@ function SettingsView({ state, updateState }) {
             <Settings size={20} />
           </div>
           <div className="tax-notes">
-            <p><strong>Usuario inicial:</strong> admin@dreams.ec</p>
-            <p><strong>Contraseña inicial:</strong> Dreams2026!</p>
+            <p><strong>Acceso:</strong> {cloudConfigured ? 'usuarios autorizados con Supabase Auth.' : 'usuario demo local para pruebas.'}</p>
+            {!cloudConfigured && <p><strong>Demo:</strong> admin@dreams.ec / Dreams2026!</p>}
             <p><strong>Guardado actual:</strong> {cloudConfigured ? 'sincronización Supabase activa.' : 'local en este navegador.'}</p>
             <p><strong>Base continua:</strong> Supabase Auth + tabla app_states para datos compartidos.</p>
           </div>
           <button className="danger-button" onClick={reset}>Restaurar datos de prueba</button>
+        </section>
+        <section className="panel">
+          <div className="section-title">
+            <div>
+              <p className="eyebrow">Privacidad</p>
+              <h2>Protección de acceso</h2>
+            </div>
+            <ShieldCheck size={20} />
+          </div>
+          <div className="security-list">
+            <div><EyeOff size={18} /><span>La página pide a buscadores que no la indexen ni la muestren en resultados.</span></div>
+            <div><LockKeyhole size={18} /><span>Los datos contables se guardan por usuario en Supabase con acceso autenticado.</span></div>
+            <div><KeyRound size={18} /><span>La recuperación de contraseña se hace por correo y enlace seguro.</span></div>
+          </div>
+          <p className="security-note">Importante: GitHub Pages muestra la aplicación públicamente, pero no los datos. Para máxima privacidad futura conviene moverla a un hosting con acceso restringido o dominio privado.</p>
         </section>
         <section className="panel">
           <div className="section-title">
@@ -1160,10 +1554,10 @@ function SettingsView({ state, updateState }) {
             <Cloud size={20} />
           </div>
           <div className="cloud-steps">
-            <div><b>1</b><span>Subir el repositorio a GitHub.</span></div>
-            <div><b>2</b><span>Activar GitHub Pages con Actions.</span></div>
-            <div><b>3</b><span>Crear Supabase y ejecutar el esquema SQL.</span></div>
-            <div><b>4</b><span>Configurar URL y clave anon en variables de entorno.</span></div>
+            <div><b>1</b><span>Repositorio publicado en GitHub Pages.</span></div>
+            <div><b>2</b><span>Supabase activo para usuarios, contraseña y guardado en nube.</span></div>
+            <div><b>3</b><span>Registro público cerrado desde la app publicada.</span></div>
+            <div><b>4</b><span>La app puede crecer con inventario, facturación y reportes adicionales.</span></div>
           </div>
           <div className={`cloud-state ${cloudConfigured ? 'ready' : ''}`}>
             {cloudConfigured ? 'Supabase configurado: la app puede sincronizar datos.' : 'Supabase pendiente: la app funciona localmente hasta añadir credenciales.'}

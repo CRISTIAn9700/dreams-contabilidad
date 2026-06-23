@@ -195,7 +195,8 @@ a,
 }
 
 .demo-note,
-.form-error {
+.form-error,
+.form-notice {
   margin: 0;
   font-size: 13px;
 }
@@ -203,6 +204,11 @@ a,
 .form-error {
   color: var(--danger);
   font-weight: 700;
+}
+
+.form-notice {
+  color: #067647;
+  font-weight: 750;
 }
 
 .app-shell {
@@ -380,6 +386,10 @@ a,
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #f8fafc;
+}
+
+.segmented.single {
+  grid-template-columns: 1fr;
 }
 
 .segmented button {
@@ -670,6 +680,12 @@ textarea {
   transition: transform 0.18s var(--spring), filter 0.18s ease, box-shadow 0.18s ease;
 }
 
+.primary-button:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+  opacity: 0.62;
+}
+
 .primary-button:hover,
 .danger-button:hover,
 .quick-actions button:hover,
@@ -690,6 +706,19 @@ textarea {
   border-color: var(--line);
   color: var(--navy);
   background: #fff7ed;
+}
+
+.link-button {
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  background: transparent;
+  font-weight: 850;
+  text-align: center;
+}
+
+.link-button:hover {
+  text-decoration: underline;
 }
 
 .button-row {
@@ -959,6 +988,118 @@ button.sri-link {
   gap: 14px;
 }
 
+.filters-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.history-hero .primary-button {
+  flex-shrink: 0;
+}
+
+.history-tree {
+  display: grid;
+  gap: 16px;
+}
+
+.history-group {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  background: #fbfcff;
+  animation: riseIn 0.34s var(--spring) both;
+}
+
+.history-group h3 {
+  margin: 0 0 12px;
+  color: var(--navy);
+  text-transform: capitalize;
+}
+
+.history-day {
+  border-left: 3px solid #fdba74;
+  padding: 0 0 0 12px;
+  display: grid;
+  gap: 9px;
+}
+
+.history-day + .history-day {
+  margin-top: 14px;
+}
+
+.history-day-title,
+.history-sale {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+}
+
+.history-day-title {
+  color: var(--navy);
+  text-transform: capitalize;
+}
+
+.history-day-title span {
+  color: var(--brand);
+  font-weight: 900;
+}
+
+.history-sale {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: white;
+  transition: transform 0.16s var(--spring), box-shadow 0.16s ease;
+}
+
+.history-sale:hover {
+  transform: translateX(2px);
+  box-shadow: 0 12px 22px rgba(7, 25, 51, 0.08);
+}
+
+.history-sale div {
+  display: grid;
+  gap: 3px;
+}
+
+.history-sale span,
+.empty-state,
+.security-note {
+  color: var(--muted);
+}
+
+.empty-state {
+  margin: 0;
+}
+
+.security-list {
+  display: grid;
+  gap: 10px;
+}
+
+.security-list div {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  background: #fbfcff;
+}
+
+.security-list svg {
+  color: var(--brand);
+}
+
+.security-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .settings-stack {
   display: grid;
   gap: 18px;
@@ -1034,6 +1175,10 @@ button.sri-link {
 
   .metrics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filters-grid {
+    grid-template-columns: 1fr;
   }
 
   .hero-panel {
