@@ -852,7 +852,7 @@ function PublicStorefront({ onEnter }) {
     <main className="public-store-page">
       <header className="public-store-nav">
         <a className="public-brand-link" href="#inicio" aria-label="Ir al inicio">
-          <BrandLogo variant="inverse" size="sidebar" />
+          <img className="public-wordmark" src={assetPath('brand/dreams-wordmark-white-soft.png')} alt="Dreams" />
         </a>
         <nav aria-label="Navegación de tienda Dreams">
           <a href="#productos">Servicios</a>
