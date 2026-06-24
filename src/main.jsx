@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   ArrowRight,
   BarChart3,
@@ -50,6 +52,8 @@ import {
   signUpCloud,
   updateCloudPassword,
 } from './cloud';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const IVA_RATE = 0.15;
 const USD = new Intl.NumberFormat('es-EC', {
@@ -849,17 +853,20 @@ function PublicStorefront({ onEnter }) {
       <header className="public-store-nav">
         <a className="public-brand-link" href="#inicio" aria-label="Ir al inicio">
           <BrandLogo variant="inverse" size="sidebar" />
+          <span>Agencia de Publicidad</span>
         </a>
         <nav aria-label="Navegación de tienda Dreams">
-          <a href="#productos">Productos</a>
+          <a href="#productos">Servicios</a>
+          <a href="#galeria">Proyectos</a>
           <a href="#ecosistema">Ecosistema</a>
           <a href="#historia">Historia</a>
-          <a href="#galeria">Galería</a>
         </nav>
         <div className="public-nav-actions">
-          <WhatsAppButton className="ghost-button white" label="WhatsApp" />
-          <button className="primary-button light" onClick={onEnter}>
-            Contabilidad
+          <WhatsAppButton className="nav-estimate-button" label="Cotizar proyecto" />
+          <button className="menu-lines" type="button" onClick={onEnter} aria-label="Abrir acceso contable">
+            <span />
+            <span />
+            <span />
           </button>
         </div>
       </header>
@@ -1187,8 +1194,95 @@ function WhatsAppButton({ className = 'primary-button', label = 'Cotizar por Wha
 function Storefront({ state, setView, publicMode = false, onEnter }) {
   const categories = ['Todo', ...new Set(serviceCatalog.map((service) => service.group))];
   const [category, setCategory] = useState('Todo');
+  const storefrontRef = useRef(null);
   const filteredServices = category === 'Todo' ? serviceCatalog : serviceCatalog.filter((service) => service.group === category);
   const visibleProducts = state.products.slice(0, 4);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return undefined;
+
+    const mm = gsap.matchMedia();
+    const ctx = gsap.context((self) => {
+      const fadeElements = self.selector('.gsap-fade-up');
+      const parallaxElements = self.selector('.gsap-parallax');
+      const ecosystemCards = self.selector('.ecosystem-flow div');
+      const ecosystemSection = self.selector('.ecosystem-section')[0];
+      const pinnedProgress = self.selector('.pinned-progress')[0];
+
+      gsap.utils.toArray(fadeElements).forEach((element) => {
+        gsap.fromTo(element, {
+          autoAlpha: 0,
+          y: 42,
+        }, {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.85,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: element,
+            start: 'top 82%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          },
+        });
+      });
+
+      gsap.utils.toArray(parallaxElements).forEach((element) => {
+        gsap.fromTo(element, {
+          yPercent: -6,
+        }, {
+          yPercent: 8,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: element,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.8,
+          },
+        });
+      });
+
+      mm.add('(min-width: 900px)', () => {
+        gsap.to(pinnedProgress, {
+          scaleX: 1,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: ecosystemSection,
+            start: 'top top',
+            end: '+=120%',
+            scrub: true,
+            pin: true,
+            anticipatePin: 1,
+          },
+        });
+      });
+
+      mm.add('(max-width: 899px)', () => {
+        gsap.fromTo(ecosystemCards, {
+          autoAlpha: 0,
+          y: 26,
+        }, {
+          autoAlpha: 1,
+          y: 0,
+          stagger: 0.08,
+          duration: 0.55,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: ecosystemSection,
+            start: 'top 72%',
+            toggleActions: 'play none none reverse',
+          },
+        });
+      });
+    }, storefrontRef);
+
+    return () => {
+      mm.revert();
+      ctx.revert();
+    };
+  }, []);
+
   const goTo = (view) => {
     if (publicMode) {
       onEnter?.();
@@ -1197,10 +1291,10 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
     setView(view);
   };
   return (
-    <main className="storefront">
+    <main className="storefront" ref={storefrontRef}>
       <section className="store-hero" id="inicio">
         <video
-          className="store-hero-video"
+          className="store-hero-video gsap-parallax"
           src={HERO_VIDEO_URL}
           autoPlay
           muted
@@ -1209,9 +1303,8 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
           preload="metadata"
           aria-hidden="true"
         />
-        <div className="store-hero-copy">
-          <BrandLogo variant="inverse" size="store" />
-          <p className="eyebrow hero-title-blue">Dreams Agencia de Publicidad</p>
+        <div className="store-hero-copy gsap-fade-up">
+          <p className="hero-kicker"><span /> Bienvenido a Dreams Agencia <span /></p>
           <h2>Todo para que tu marca se vea, venda y crezca.</h2>
           <p>
             Corte láser CO2, grabado, letreros, textiles, material impreso, marketing digital y asesoría web desde Tulcán para negocios que necesitan presencia real.
@@ -1229,16 +1322,30 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             </button>
           </div>
         </div>
+        <div className="hero-bottom-metrics gsap-fade-up" aria-label="Fortalezas de Dreams">
+          {[
+            ['+12 años', 'trayectoria'],
+            ['Láser CO2', 'corte y grabado'],
+            ['Entrega ágil', 'producción local'],
+            ['Publicidad 360', 'física y digital'],
+          ].map(([value, label]) => (
+            <div key={value}>
+              <span><Sparkles size={18} /></span>
+              <strong>{value}</strong>
+              <small>{label}</small>
+            </div>
+          ))}
+        </div>
       </section>
 
-      <section className="brand-strip" aria-label="Líneas principales de Dreams">
+      <section className="brand-strip gsap-fade-up" aria-label="Líneas principales de Dreams">
         {['Corte láser CO2', 'Letreros 3D', 'DTF', 'Sublimación', 'Plotter', 'Marketing digital'].map((item) => (
           <span key={item}>{item}</span>
         ))}
       </section>
 
       <section className="store-section" id="productos">
-        <div className="store-section-head">
+        <div className="store-section-head gsap-fade-up">
           <div>
             <p className="eyebrow">Tienda Dreams</p>
             <h2>Productos y servicios por categoría</h2>
@@ -1252,7 +1359,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             </button>
           ))}
         </div>
-        <div className="service-grid">
+        <div className="service-grid gsap-fade-up">
           {filteredServices.map((service, index) => (
             <article className={`service-card ${service.accent}`} key={service.title} style={{ '--delay': `${index * 0.05}s` }}>
               <div className="service-icon"><Sparkles size={18} /></div>
@@ -1269,10 +1376,11 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
       </section>
 
       <section className="ecosystem-section" id="ecosistema">
-        <div className="ecosystem-copy">
+        <div className="ecosystem-copy gsap-fade-up">
           <p className="eyebrow">Ecosistema Dreams</p>
           <h2>Una sola experiencia para vender, producir y registrar.</h2>
           <p>La portada funciona como vitrina comercial. El sistema interno registra clientes, ventas, facturas PDF, históricos, IVA y reportes para que cada pedido tenga seguimiento.</p>
+          <span className="pinned-progress" aria-hidden="true" />
         </div>
         <div className="ecosystem-flow">
           {[
@@ -1287,7 +1395,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
       </section>
 
       <section className="story-section" id="historia">
-        <div className="story-copy">
+        <div className="story-copy gsap-fade-up">
           <p className="eyebrow">Quiénes somos</p>
           <h2>Dreams nace en Tulcán y crece con la publicidad real de cada negocio.</h2>
           <p>
@@ -1300,7 +1408,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             combinando taller, diseño, instalación, asesoría y tecnología en un mismo ecosistema.
           </p>
         </div>
-        <div className="story-timeline">
+        <div className="story-timeline gsap-fade-up">
           <div><strong>2012</strong><span>Inicio del proyecto Dreams.</span></div>
           <div><strong>Tulcán</strong><span>Producción publicitaria en el norte del Ecuador.</span></div>
           <div><strong>360°</strong><span>Publicidad física, digital, marketing y web.</span></div>
@@ -1308,14 +1416,14 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
       </section>
 
       <section className="store-section" id="galeria">
-        <div className="store-section-head">
+        <div className="store-section-head gsap-fade-up">
           <div>
             <p className="eyebrow">Galería real</p>
             <h2>Espacio listo para fotos y videos de la empresa</h2>
           </div>
           <span>Cuando me pases fotos inéditas, reemplazo estos bloques por imágenes reales optimizadas para web.</span>
         </div>
-        <div className="media-grid">
+        <div className="media-grid gsap-fade-up">
           {['Máquina láser en producción', 'Letreros instalados', 'Trabajos en acrílico', 'Equipo Dreams'].map((item, index) => (
             <article className="media-placeholder" key={item}>
               <span>{String(index + 1).padStart(2, '0')}</span>
@@ -1331,7 +1439,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
       </section>
 
       <section className="store-section store-split">
-        <div className="store-blue-card">
+        <div className="store-blue-card gsap-fade-up">
           <p className="eyebrow">Ecosistema interno</p>
           <h2>La tienda vende; la contabilidad organiza.</h2>
           <p>El cliente ve el servicio, tú cotizas, registras la venta, subes la factura PDF y luego revisas clientes, meses fuertes y rentabilidad desde el panel privado.</p>
@@ -1345,7 +1453,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             </button>
           )}
         </div>
-        <div className="store-product-list">
+        <div className="store-product-list gsap-fade-up">
           <div className="section-title">
             <div>
               <p className="eyebrow">Productos del sistema</p>

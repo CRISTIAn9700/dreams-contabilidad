@@ -1162,25 +1162,47 @@ button.sri-link {
 }
 
 .public-store-nav {
-  width: min(1440px, calc(100% - 40px));
-  margin: 20px auto 0;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 999px;
-  padding: 12px 16px;
+  width: min(1780px, calc(100% - clamp(32px, 8vw, 160px)));
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  padding: 34px 0;
   display: flex;
   justify-content: space-between;
-  gap: 16px;
+  gap: 22px;
   align-items: center;
-  background: rgba(255, 255, 255, 0.09);
-  backdrop-filter: blur(12px);
-  position: sticky;
-  top: 14px;
+  background: transparent;
+  backdrop-filter: none;
+  position: fixed;
+  inset: 0 0 auto;
   z-index: 20;
 }
 
 .public-brand-link {
+  display: flex;
+  gap: 14px;
+  align-items: center;
   color: inherit;
   text-decoration: none;
+}
+
+.public-brand-link .brand-logo.sidebar {
+  width: auto;
+  height: auto;
+  padding: 0;
+}
+
+.public-brand-link .brand-logo.sidebar span {
+  font-size: 36px;
+  line-height: 0.9;
+}
+
+.public-brand-link > span {
+  max-width: 130px;
+  color: white;
+  font-size: 18px;
+  font-weight: 750;
+  line-height: 1.08;
 }
 
 .public-store-nav nav,
@@ -1193,10 +1215,11 @@ button.sri-link {
 
 .public-store-nav nav a {
   border-radius: 999px;
-  padding: 9px 12px;
-  color: rgba(255, 255, 255, 0.82);
+  padding: 9px 14px;
+  color: rgba(255, 255, 255, 0.86);
   text-decoration: none;
-  font-weight: 850;
+  font-size: 18px;
+  font-weight: 800;
   transition: color 0.18s ease, background 0.18s ease, transform 0.18s var(--spring);
 }
 
@@ -1211,6 +1234,45 @@ button.sri-link {
   opacity: 0.68;
 }
 
+.nav-estimate-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 22px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  color: #111827;
+  background: white;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
+  transition: transform 0.18s var(--spring), box-shadow 0.18s ease;
+}
+
+.nav-estimate-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.22);
+}
+
+.menu-lines {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  display: grid;
+  gap: 6px;
+  align-content: center;
+  background: transparent;
+}
+
+.menu-lines span {
+  width: 30px;
+  height: 2px;
+  border-radius: 999px;
+  display: block;
+  background: white;
+}
+
 .public-store-page .storefront {
   width: 100%;
   margin: 0;
@@ -1219,9 +1281,10 @@ button.sri-link {
 .store-hero {
   min-height: 100vh;
   border-radius: 0;
-  padding: clamp(96px, 12vw, 160px) clamp(24px, 7vw, 112px) clamp(56px, 8vw, 96px);
+  padding: clamp(120px, 13vw, 190px) clamp(24px, 7vw, 112px) clamp(130px, 12vw, 180px);
   display: flex;
   align-items: center;
+  justify-content: center;
   color: white;
   background:
     radial-gradient(circle at 85% 20%, rgba(0, 164, 255, 0.48), transparent 22rem),
@@ -1237,7 +1300,8 @@ button.sri-link {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(0, 20, 78, 0.9) 0%, rgba(0, 43, 135, 0.72) 46%, rgba(0, 80, 195, 0.34) 100%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.54), rgba(0, 23, 70, 0.48)),
+    linear-gradient(90deg, rgba(0, 20, 78, 0.78) 0%, rgba(0, 43, 135, 0.52) 48%, rgba(0, 80, 195, 0.28) 100%);
   pointer-events: none;
   z-index: 1;
 }
@@ -1264,36 +1328,49 @@ button.sri-link {
   object-fit: cover;
   object-position: center;
   filter: saturate(1.06) contrast(1.08);
-  transform: scale(1.02);
+  transform: scale(1.08);
   z-index: 0;
 }
 
 .store-hero-copy {
   display: grid;
-  gap: 16px;
-  width: min(860px, 100%);
+  justify-items: center;
+  gap: 22px;
+  width: min(1260px, 100%);
+  text-align: center;
   animation: heroEnter 0.7s var(--spring) both;
 }
 
-.hero-title-blue {
-  width: fit-content;
-  border-radius: 999px;
-  padding: 8px 12px;
+.hero-kicker {
+  width: min(640px, 100%);
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(54px, 1fr) auto minmax(54px, 1fr);
+  gap: 18px;
+  align-items: center;
   color: white;
-  background: rgba(0, 80, 195, 0.72);
-  backdrop-filter: blur(10px);
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+
+.hero-kicker span {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .store-hero h2 {
-  max-width: 800px;
+  max-width: 1180px;
   margin: 0;
-  font-size: clamp(48px, 7.6vw, 104px);
-  line-height: 0.92;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(48px, 7.2vw, 122px);
+  font-weight: 500;
+  line-height: 1.08;
   letter-spacing: 0;
 }
 
 .store-hero p:not(.eyebrow) {
-  max-width: 680px;
+  max-width: 760px;
   margin: 0;
   color: rgba(255, 255, 255, 0.82);
   font-size: 18px;
@@ -1301,10 +1378,54 @@ button.sri-link {
 }
 
 .store-actions {
+  justify-content: center;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   margin-top: 6px;
+}
+
+.hero-bottom-metrics {
+  position: absolute;
+  left: clamp(24px, 7vw, 112px);
+  right: clamp(24px, 7vw, 112px);
+  bottom: clamp(28px, 5vw, 72px);
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.hero-bottom-metrics div {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: white;
+}
+
+.hero-bottom-metrics span {
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+}
+
+.hero-bottom-metrics strong,
+.hero-bottom-metrics small {
+  display: block;
+}
+
+.hero-bottom-metrics strong {
+  font-size: 17px;
+}
+
+.hero-bottom-metrics small {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 750;
 }
 
 .brand-strip {
@@ -1496,6 +1617,17 @@ button.sri-link {
   max-width: 620px;
   color: var(--muted);
   line-height: 1.6;
+}
+
+.pinned-progress {
+  width: min(360px, 100%);
+  height: 5px;
+  border-radius: 999px;
+  display: block;
+  margin-top: 22px;
+  background: linear-gradient(90deg, var(--brand), var(--accent));
+  transform: scaleX(0.08);
+  transform-origin: left center;
 }
 
 .ecosystem-flow {
@@ -2273,6 +2405,20 @@ button.sri-link {
     min-height: 100vh;
   }
 
+  .public-store-nav {
+    width: calc(100% - 32px);
+    padding-top: 20px;
+  }
+
+  .public-store-nav nav {
+    display: none;
+  }
+
+  .hero-bottom-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
   .topbar > .user-chip:first-of-type {
     margin-left: 0;
   }
@@ -2309,6 +2455,10 @@ button.sri-link {
 
   .brand-logo.sidebar {
     width: min(210px, 76vw);
+  }
+
+  .public-brand-link > span {
+    display: none;
   }
 
   .topbar,
@@ -2350,18 +2500,9 @@ button.sri-link {
   }
 
   .public-store-nav {
-    align-items: stretch;
-    flex-direction: column;
-    border-radius: 8px;
-  }
-
-  .public-store-nav nav {
-    justify-content: space-between;
-  }
-
-  .public-store-nav nav a {
-    flex: 1;
-    text-align: center;
+    align-items: center;
+    flex-direction: row;
+    border-radius: 0;
   }
 
   .install-help {
@@ -2379,12 +2520,45 @@ button.sri-link {
   }
 
   .store-hero {
-    padding: 112px 20px 48px;
+    padding: 96px 20px 180px;
     min-height: 100svh;
   }
 
   .store-hero h2 {
-    font-size: 42px;
+    font-size: clamp(36px, 12vw, 54px);
+  }
+
+  .hero-kicker {
+    grid-template-columns: 36px auto 36px;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .store-hero p:not(.eyebrow) {
+    font-size: 15px;
+  }
+
+  .hero-bottom-metrics {
+    left: 20px;
+    right: 20px;
+    bottom: 24px;
+  }
+
+  .hero-bottom-metrics div {
+    gap: 8px;
+  }
+
+  .hero-bottom-metrics span {
+    width: 38px;
+    height: 38px;
+  }
+
+  .hero-bottom-metrics strong {
+    font-size: 13px;
+  }
+
+  .hero-bottom-metrics small {
+    font-size: 11px;
   }
 
   .store-section,
