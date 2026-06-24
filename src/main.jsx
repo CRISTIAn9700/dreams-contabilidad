@@ -1386,7 +1386,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
           </div>
         </div>
         <div className="hero-bottom-metrics hero-signature gsap-fade-up" aria-label="Marca Dreams">
-          <img src={`${BASE_PATH}brand/dreams-wordmark-white-soft.png`} alt="Dreams" />
+          <img src={assetPath('brand/dreams-wordmark-white-soft.png')} alt="Dreams" />
         </div>
       </section>
 
