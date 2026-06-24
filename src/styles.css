@@ -1406,44 +1406,18 @@ button.sri-link {
 .hero-bottom-metrics {
   position: absolute;
   left: clamp(24px, 7vw, 112px);
-  right: clamp(24px, 7vw, 112px);
   bottom: clamp(28px, 5vw, 72px);
   z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 22px;
-}
-
-.hero-bottom-metrics div {
-  display: flex;
-  gap: 12px;
-  align-items: center;
   color: white;
 }
 
-.hero-bottom-metrics span {
-  width: 54px;
-  height: 54px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  color: white;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-}
-
-.hero-bottom-metrics strong,
-.hero-bottom-metrics small {
+.hero-bottom-metrics img {
   display: block;
-}
-
-.hero-bottom-metrics strong {
-  font-size: 17px;
-}
-
-.hero-bottom-metrics small {
-  color: rgba(255, 255, 255, 0.72);
-  font-weight: 750;
+  width: clamp(170px, 24vw, 360px);
+  max-width: min(60vw, 360px);
+  height: auto;
+  filter: drop-shadow(0 18px 42px rgba(0, 0, 0, 0.5));
+  opacity: 0.96;
 }
 
 .brand-strip {
@@ -2561,25 +2535,7 @@ button.sri-link {
 
   .hero-bottom-metrics {
     left: 20px;
-    right: 20px;
-    bottom: 24px;
-  }
-
-  .hero-bottom-metrics div {
-    gap: 8px;
-  }
-
-  .hero-bottom-metrics span {
-    width: 38px;
-    height: 38px;
-  }
-
-  .hero-bottom-metrics strong {
-    font-size: 13px;
-  }
-
-  .hero-bottom-metrics small {
-    font-size: 11px;
+    bottom: 22px;
   }
 
   .store-section,

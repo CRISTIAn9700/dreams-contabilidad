@@ -1386,19 +1386,8 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             </button>
           </div>
         </div>
-        <div className="hero-bottom-metrics gsap-fade-up" aria-label="Fortalezas de Dreams">
-          {[
-            ['+12 años', 'trayectoria'],
-            ['Láser CO2', 'corte y grabado'],
-            ['Entrega ágil', 'producción local'],
-            ['Publicidad 360', 'física y digital'],
-          ].map(([value, label]) => (
-            <div key={value}>
-              <span><Sparkles size={18} /></span>
-              <strong>{value}</strong>
-              <small>{label}</small>
-            </div>
-          ))}
+        <div className="hero-bottom-metrics hero-signature gsap-fade-up" aria-label="Marca Dreams">
+          <img src={`${BASE_PATH}brand/dreams-wordmark-white-soft.png`} alt="Dreams" />
         </div>
       </section>
 
