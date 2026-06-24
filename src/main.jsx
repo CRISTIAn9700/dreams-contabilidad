@@ -853,7 +853,6 @@ function PublicStorefront({ onEnter }) {
       <header className="public-store-nav">
         <a className="public-brand-link" href="#inicio" aria-label="Ir al inicio">
           <BrandLogo variant="inverse" size="sidebar" />
-          <span>Agencia de Publicidad</span>
         </a>
         <nav aria-label="Navegación de tienda Dreams">
           <a href="#productos">Servicios</a>
