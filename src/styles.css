@@ -153,6 +153,7 @@ a,
   display: flex;
   align-items: center;
   overflow: hidden;
+  user-select: none;
 }
 
 .brand-logo.hero {
@@ -179,6 +180,11 @@ a,
   font-size: 38px;
   font-weight: 500;
   line-height: 1;
+  user-select: none;
+}
+
+.brand-logo span::selection {
+  background: transparent;
 }
 
 .brand-logo.inverse span {
