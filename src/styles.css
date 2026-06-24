@@ -1151,6 +1151,24 @@ button.sri-link {
   display: grid;
   gap: 0;
   scroll-snap-type: y proximity;
+  position: relative;
+}
+
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 40;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.scroll-progress span {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: linear-gradient(90deg, #ffffff, var(--accent), var(--brand));
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 
 .public-store-page {
@@ -1516,6 +1534,7 @@ button.sri-link {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+  perspective: 1200px;
 }
 
 .service-card {
@@ -1532,6 +1551,8 @@ button.sri-link {
   transition: transform 0.2s var(--spring), box-shadow 0.2s ease, border-color 0.2s ease;
   animation: riseIn 0.5s var(--spring) both;
   animation-delay: var(--delay);
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
 }
 
 .service-card:hover {

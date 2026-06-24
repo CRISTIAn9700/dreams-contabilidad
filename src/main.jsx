@@ -1209,6 +1209,35 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
       const ecosystemCards = self.selector('.ecosystem-flow div');
       const ecosystemSection = self.selector('.ecosystem-section')[0];
       const pinnedProgress = self.selector('.pinned-progress')[0];
+      const serviceCards = self.selector('.service-card');
+      const brandItems = self.selector('.brand-strip-item');
+      const heroCopy = self.selector('.store-hero-copy')[0];
+      const heroMetrics = self.selector('.hero-bottom-metrics')[0];
+      const heroVideo = self.selector('.store-hero-video')[0];
+      const scrollProgress = self.selector('.scroll-progress span')[0];
+
+      gsap.to(scrollProgress, {
+        scaleX: 1,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: storefrontRef.current,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.2,
+        },
+      });
+
+      gsap.timeline({
+        scrollTrigger: {
+          trigger: '.store-hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 0.8,
+        },
+      })
+        .to(heroVideo, { scale: 1.18, filter: 'saturate(1.18) contrast(1.12) brightness(0.82)', ease: 'none' }, 0)
+        .to(heroCopy, { y: -90, autoAlpha: 0.28, ease: 'none' }, 0)
+        .to(heroMetrics, { y: 70, autoAlpha: 0, ease: 'none' }, 0);
 
       gsap.utils.toArray(fadeElements).forEach((element) => {
         gsap.fromTo(element, {
@@ -1241,6 +1270,40 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
             scrub: 0.8,
           },
         });
+      });
+
+      gsap.fromTo(serviceCards, {
+        autoAlpha: 0,
+        y: 90,
+        rotateX: 14,
+        scale: 0.92,
+      }, {
+        autoAlpha: 1,
+        y: 0,
+        rotateX: 0,
+        scale: 1,
+        duration: 1,
+        stagger: 0.08,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: '#productos',
+          start: 'top 68%',
+          end: 'center 42%',
+          scrub: 0.6,
+        },
+      });
+
+      gsap.fromTo(brandItems, {
+        xPercent: -10,
+      }, {
+        xPercent: 10,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.brand-strip',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: true,
+        },
       });
 
       mm.add('(min-width: 900px)', () => {
@@ -1292,6 +1355,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
   };
   return (
     <main className="storefront" ref={storefrontRef}>
+      <div className="scroll-progress" aria-hidden="true"><span /></div>
       <section className="store-hero" id="inicio">
         <video
           className="store-hero-video gsap-parallax"
@@ -1340,7 +1404,7 @@ function Storefront({ state, setView, publicMode = false, onEnter }) {
 
       <section className="brand-strip gsap-fade-up" aria-label="Líneas principales de Dreams">
         {['Corte láser CO2', 'Letreros 3D', 'DTF', 'Sublimación', 'Plotter', 'Marketing digital'].map((item) => (
-          <span key={item}>{item}</span>
+          <span className="brand-strip-item" key={item}>{item}</span>
         ))}
       </section>
 
